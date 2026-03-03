@@ -1,3 +1,4 @@
+using AYellowpaper;
 using System;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -7,9 +8,10 @@ public class HandObjectSwapFeature : MonoBehaviour
 {
     [SerializeField] private InputActionProperty buttonReference;
 
-    [SerializeField] private GameObject[] objects;
+    [SerializeField] private InterfaceReference<ISwapable>[] objects;
+    [SerializeField] private bool Swap = false;
 
-    private GameObject currentObject;
+    private ISwapable currentObject;
     private int counter = 0;
 
 
@@ -18,7 +20,16 @@ public class HandObjectSwapFeature : MonoBehaviour
     {
         buttonReference.action.Enable();
         buttonReference.action.started += HandleButtonPress;
-        currentObject = objects[0];
+        currentObject = objects[0].Value;
+    }
+
+    private void Update()
+    {
+        if (Swap)
+        {
+            Swap = false;
+            HandleObjectActiveState();
+        }
     }
 
     private void HandleButtonPress(InputAction.CallbackContext context)
@@ -28,18 +39,19 @@ public class HandObjectSwapFeature : MonoBehaviour
     }
 
 
+
     private void HandleObjectActiveState()
     {
-        GameObject previousObject = currentObject;
+        ISwapable previousObject = currentObject;
         currentObject = GetNextObject();
 
         if (previousObject != null)
-            previousObject.SetActive(false);
+            previousObject.Deactivate();
 
         if (currentObject != null)
-            currentObject.SetActive(true);
+            currentObject.Activate();
     }
-    private GameObject GetNextObject()
+    private ISwapable GetNextObject()
     {
         int nextState = counter + 1;
         if (nextState == objects.Length)
@@ -51,8 +63,7 @@ public class HandObjectSwapFeature : MonoBehaviour
             counter++;
         }
 
-        Debug.Log("get : " + objects[counter].name);
-        return objects[counter];
+        return objects[counter].Value;
     }
 
 
