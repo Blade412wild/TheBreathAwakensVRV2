@@ -1,7 +1,8 @@
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
-public class TerrainTypeToGroundType : MonoBehaviour 
+public class TerrainTypeToGroundType : MonoBehaviour
 {
 
 
@@ -22,7 +23,7 @@ public class TerrainTypeToGroundType : MonoBehaviour
         {
             GroundType type = terrainDic[texture];
             Debug.Log("Found Key : " + type);
-            return type;    
+            return type;
         }
         else
         {
@@ -34,14 +35,14 @@ public class TerrainTypeToGroundType : MonoBehaviour
     {
         foreach (var terrainType in terainTypeCollection.terrainTypes)
         {
-            foreach(Texture texture in terrainType.possibleTextures)
+            foreach (Texture texture in terrainType.possibleTextures)
             {
-                if(texture == null)
+                if (texture == null)
                 {
                     Debug.LogError("No texture in " + terrainType.name + "possibletextures[]");
                     continue;
                 }
-                
+
                 if (terrainDic.ContainsKey(texture))
                 {
                     Debug.LogWarning("TextureDic already contains" + texture.name + " as key");
@@ -50,10 +51,30 @@ public class TerrainTypeToGroundType : MonoBehaviour
                 else
                 {
                     terrainDic.Add(texture, terrainType.GroundType);
-                    Debug.Log("added " +  texture.name + "to dic with groundType : " +  terrainType.GroundType.name);
+                    Debug.Log("added " + texture.name + "to dic with groundType : " + terrainType.GroundType.name);
                 }
             }
         }
+    }
+
+    private void CheckForDoubleTextureLinking()
+    {
+        //int indexCounter = 0;
+        //for(int i = 0; i < terainTypeCollection.terrainTypes.Length -1; i++)
+        //{
+        //    TerrainType currentTerrainType = terainTypeCollection.terrainTypes[i];
+
+        //    Texture currentCheckingTexture = terainTypeCollection.terrainTypes[].;
+
+        //    // checking for example graffle
+        //    for (int j = 0; j < textureType.possibleTextures.Length; j++)
+        //    {
+
+        //    }
+
+        //}
+        
+
     }
 
 
