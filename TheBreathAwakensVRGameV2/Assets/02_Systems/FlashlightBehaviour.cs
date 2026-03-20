@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using FMODUnity;
 
 public class FlashlightBehaviour : MonoBehaviour, ISwapable
 {
@@ -12,6 +13,7 @@ public class FlashlightBehaviour : MonoBehaviour, ISwapable
 
     [SerializeField] private Light lightSource;
     [SerializeField] private InputActionProperty flashlightActivateInput;
+    [SerializeField] private EventReference flashlightClickEvent;
 
     
 
@@ -28,6 +30,7 @@ public class FlashlightBehaviour : MonoBehaviour, ISwapable
 
         SwapableItemActiveState = true;
         gameObject.SetActive(true);
+        RuntimeManager.PlayOneShot(flashlightClickEvent);
     }
 
     public void Deactivate()
@@ -35,6 +38,7 @@ public class FlashlightBehaviour : MonoBehaviour, ISwapable
         flashlightActivateInput.action.started -= HandleFlashlightInputEvent;
 
         SwapableItemActiveState = false;
+        RuntimeManager.PlayOneShot(flashlightClickEvent);
         gameObject.SetActive(false);
     }
 
@@ -54,13 +58,14 @@ public class FlashlightBehaviour : MonoBehaviour, ISwapable
             flashlightState = flashLightStates.On;
             lightSource.enabled = true;
             ChangeLightEvent?.Invoke(true);
+            
         }
         else
         {
             flashlightState = flashLightStates.Off;
             lightSource.enabled = false;
             ChangeLightEvent?.Invoke(false);
-
+            
         }
 
     }

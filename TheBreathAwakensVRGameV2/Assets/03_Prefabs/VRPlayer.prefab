@@ -323,7 +323,6 @@ GameObject:
   m_Component:
   - component: {fileID: 2871979261501637472}
   - component: {fileID: 326485414870804385}
-  - component: {fileID: 3787821182377921978}
   - component: {fileID: 5416760053411860794}
   - component: {fileID: 9030932240022878411}
   m_Layer: 0
@@ -399,14 +398,6 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
---- !u!81 &3787821182377921978
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5348381719363749277}
-  m_Enabled: 1
 --- !u!114 &5416760053411860794
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -973,6 +964,13 @@ MonoBehaviour:
       m_SingletonActionBindings: []
       m_Flags: 0
     m_Reference: {fileID: 83097790271614945, guid: c348712bda248c246b8c49b3db54643f, type: 3}
+  flashlightClickEvent:
+    Guid:
+      Data1: 227671010
+      Data2: 1283103643
+      Data3: -876008536
+      Data4: -880899499
+    Path: event:/FlashlightToggle
 --- !u!1 &8934289329371105847
 GameObject:
   m_ObjectHideFlags: 0
