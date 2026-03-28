@@ -148,7 +148,7 @@ public class BreathingSensorSimulator : MonoBehaviour
 
     private void UpdateTimer()
     {
-        Debug.Log("overallTime : " + overallTime);
+        // Debug.Log("overallTime : " + overallTime);
         if (currentPhaseTime >= endPhasesTime[currentPhase])
         {
             if (currentPhase == phasesAmount - 1)
