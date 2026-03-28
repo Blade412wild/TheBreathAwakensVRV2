@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.03.00">
+	<object class="ParameterPreset" id="{a9437e19-080a-49e4-b29f-e4fe302a3379}">
+		<property name="name">
+			<value>audioBreathFrequency</value>
+		</property>
+		<relationship name="folder">
+			<destination>{e555bf54-492e-4dd3-80d9-a708fc65e160}</destination>
+		</relationship>
+		<relationship name="parameter">
+			<destination>{9420aecb-94f4-4712-84df-16a797ababdb}</destination>
+		</relationship>
+	</object>
+	<object class="GameParameter" id="{9420aecb-94f4-4712-84df-16a797ababdb}">
+		<property name="initialValue">
+			<value>0</value>
+		</property>
+	</object>
+</objects>
