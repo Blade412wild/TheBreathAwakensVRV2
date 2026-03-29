@@ -1,12 +1,19 @@
-using UnityEngine;
-using FMODUnity;
 using FMOD.Studio;
+using FMODUnity;
+using System.Collections;
+using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit.AffordanceSystem.Theme.Primitives;
+using static BreathFMODDriver;
 
 public class BreathFMODDriver : MonoBehaviour
 {
+    public enum DataOrigin { BreathCycle, ManualSlider, SensorData }
+
     [Header("References")]
     [SerializeField] private BreathingSensorSimulator simulator;
     [SerializeField] private EventReference breathEvent;
+    [SerializeField] private BreathingDeviceData dataContainer;
+
 
     [Header("FMOD Parameter Names")]
     [SerializeField] private string breathGainParam = "audioBreathGain";
@@ -30,6 +37,10 @@ public class BreathFMODDriver : MonoBehaviour
     [SerializeField] private float gainSmoothSpeed = 12.0f;
     [SerializeField] private float qSmoothSpeed = 12.0f;
     [SerializeField] private float frequencySmoothSpeed = 10.0f;
+
+    [Header("Control")]
+    public DataOrigin dataOrigin;
+
 
     private EventInstance breathInstance;
 
@@ -61,7 +72,7 @@ public class BreathFMODDriver : MonoBehaviour
     private void Update()
     {
         int state = simulator.GetCurrentPhase();
-        float sensorValue = simulator.GetData(state);
+        float sensorValue = GetSensorData(state);
         float intensity = Mathf.Clamp01(Mathf.Abs(sensorValue));
 
         float targetBreathGain = 0.0f;
@@ -93,6 +104,21 @@ public class BreathFMODDriver : MonoBehaviour
         breathInstance.setParameterByName(breathGainParam, currentBreathGain);
         breathInstance.setParameterByName(breathQVolumeParam, currentBreathQVolume);
         breathInstance.setParameterByName(breathFrequencyParam, currentBreathFrequency);
+    }
+
+    private float GetSensorData(int state)
+    {
+        float data = 0;
+        switch (dataOrigin)
+        {
+            case DataOrigin.BreathCycle: return simulator.GetCycleData(state); break;
+            case DataOrigin.ManualSlider: return simulator.GetManualSliderData(); break;
+            case DataOrigin.SensorData: return dataContainer.inExhaleSpeed; break;
+        }
+
+
+
+        return data;
     }
 
     private void OnDestroy()

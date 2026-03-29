@@ -1,17 +1,30 @@
 using System;
 using UnityEngine;
+using static BreathFMODDriver;
+using static UnityEngine.InputSystem.HID.HID;
 
 public class BreathingSensorSimulator : MonoBehaviour
 {
+
+    public event Action SensorMeasurementEvent;
+    public event Action UpdateVisualsEvent;
     public event Action StartSimEvent;
     [Header("Controls")]
+    [SerializeField] private bool usingSimulator;
     [SerializeField] private bool start;
     //[SerializeField] private bool pauze;
     [SerializeField] private bool reset;
     [SerializeField] private bool loop;
 
+    [Space]
+    [Range(-1, 1)]
+    [SerializeField] private float manualSlider;
+
     [Header("Setup")]
     [SerializeField] private BreathingCycle cycle;
+    [SerializeField] private BreathFMODDriver FMODdriver;
+    [SerializeField] private int sensorReactionTime;
+    [SerializeField] private BreathingDeviceData deviceData;
 
     [Header("Info")]
     public float FullCycleDuration;
@@ -32,6 +45,11 @@ public class BreathingSensorSimulator : MonoBehaviour
     private bool mayUpdate = false;
     private bool isPaused;
 
+    private DateTime previousTime;
+    private DateTime currentTime;
+    private TimeSpan timeSpan;
+
+
 
 
 
@@ -44,14 +62,23 @@ public class BreathingSensorSimulator : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+
+        if (!usingSimulator) return;
+
         CheckInput();
+        UpdateSimulatorTimer();
 
         if (mayUpdate)
         {
             UpdateInfo();
-            UpdateTimer();
-
+            UpdateBreathCycleTimer();
         }
+
+    }
+
+    private void OnDisable()
+    {
+        SensorMeasurementEvent -= HandleSensorMeasurementEvent;
 
     }
 
@@ -65,7 +92,7 @@ public class BreathingSensorSimulator : MonoBehaviour
         return currentPhase;
     }
 
-    public float GetData(int currentPhase)
+    public float GetCycleData(int currentPhase)
     {
         if (currentPhase == 0)
         {
@@ -81,15 +108,24 @@ public class BreathingSensorSimulator : MonoBehaviour
         {
             AnimationCurve curve = cycle.ExhalingSample.Curve;
             float valueAtTime = curve.Evaluate(currentPhaseTime);
-            return valueAtTime*-1;
+            return valueAtTime * -1;
         }
         return 0;
 
     }
 
+    public float GetManualSliderData()
+    {
+        return manualSlider;
+    }
+
 
     private void SetupSimulator()
     {
+        currentTime = DateTime.Now;
+        previousTime = currentTime;
+        SensorMeasurementEvent += HandleSensorMeasurementEvent;
+
         for (int i = 0; i < phasesAmount; i++)
         {
             if (i == 0)
@@ -115,9 +151,61 @@ public class BreathingSensorSimulator : MonoBehaviour
                 endPhasesTime[i] = time;
                 FullCycleDuration += time;
             }
-
         }
     }
+    private void HandleSensorMeasurementEvent()
+    {
+        if (FMODdriver.dataOrigin == DataOrigin.ManualSlider)
+        {
+            if (manualSlider > 0)
+            {
+                UpdateTemporaryDataContainer(0, manualSlider);
+            }
+            else if (manualSlider < 0)
+            {
+                UpdateTemporaryDataContainer(2, manualSlider);
+
+            }
+            else
+            {
+                UpdateTemporaryDataContainer(1, manualSlider);
+
+            }
+        }
+        else if (FMODdriver.dataOrigin == DataOrigin.BreathCycle)
+        {
+            int phase = GetCurrentPhase();
+            float sensorData = GetCycleData(phase);
+            UpdateTemporaryDataContainer(phase, sensorData);
+
+        }
+
+        UpdateVisualsEvent?.Invoke();
+
+    }
+
+    private void UpdateTemporaryDataContainer(int state, float data)
+    {
+        deviceData.BreathingState = (BreathingState)state;
+        deviceData.inExhaleSpeed = data;
+
+    }
+
+    private void UpdateSimulatorTimer()
+    {
+        currentTime = DateTime.Now;
+
+        timeSpan = currentTime - previousTime;
+
+        if (timeSpan.TotalMilliseconds >= sensorReactionTime)
+        {
+            SensorMeasurementEvent?.Invoke();
+            previousTime = currentTime;
+        }
+
+
+    }
+
 
     private void CheckInput()
     {
@@ -146,7 +234,7 @@ public class BreathingSensorSimulator : MonoBehaviour
     }
 
 
-    private void UpdateTimer()
+    private void UpdateBreathCycleTimer()
     {
         // Debug.Log("overallTime : " + overallTime);
         if (currentPhaseTime >= endPhasesTime[currentPhase])

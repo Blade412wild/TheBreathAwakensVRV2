@@ -17,5 +17,5 @@ public class BreathingDeviceData : ScriptableObject
     public float AirVelocity;
 
 }
-public enum BreathingState { inhaling = -1, holdingBreath = 0, exhaling = 1 };
+public enum BreathingState { inhaling = 0, holdingBreath = 1, exhaling = 2 };
 

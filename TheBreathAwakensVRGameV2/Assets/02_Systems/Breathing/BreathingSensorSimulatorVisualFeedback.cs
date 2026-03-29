@@ -9,6 +9,7 @@ public class BreathingSensorSimulatorVisualFeedback : MonoBehaviour
 
     [Header("References")]
     [SerializeField] private BreathingSensorSimulator simulator;
+    [SerializeField] private BreathingDeviceData deviceData;
 
     [Header("Visuals")]
     [SerializeField] private float highestVisualPeak;
@@ -18,13 +19,8 @@ public class BreathingSensorSimulatorVisualFeedback : MonoBehaviour
     [SerializeField] private float speed;
 
     [Header("Sensor")]
-    [SerializeField] private int sensorReactionTime;
     [SerializeField] private float highestSensorDataPeak;
     [SerializeField] private float lowestSensorDataPeak;
-
-    private DateTime previousTime;
-    private DateTime currentTime;
-    private TimeSpan timeSpan;
 
     private Vector3 targetPos;
     private Vector3 currentPos;
@@ -37,9 +33,7 @@ public class BreathingSensorSimulatorVisualFeedback : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        currentTime = DateTime.Now;
-        previousTime = currentTime;
-        ReadSensorDataEvent += HandleReadSensorDataEvent;
+        //simulator.UpdateVisualsEvent += HandleUpdateVisualsEvent;
         SetupGraph();
 
     }
@@ -48,38 +42,19 @@ public class BreathingSensorSimulatorVisualFeedback : MonoBehaviour
     void Update()
     {
         currentPos = visualPointTrans.position;
-        UpdateTimer();
-        //UpdatePos();
+        HandleUpdateVisualsEvent();
     }
 
     private void OnDisable()
     {
-        ReadSensorDataEvent -= HandleReadSensorDataEvent;
-
-    }
-    private void UpdateTimer()
-    {
-        currentTime = DateTime.Now;
-
-        timeSpan = currentTime - previousTime;
-
-        if (timeSpan.TotalMilliseconds >= sensorReactionTime)
-        {
-            //Debug.Log("Refresh Time : " + timeSpan.TotalMilliseconds);
-            ReadSensorDataEvent?.Invoke();
-            previousTime = currentTime;
-        }
-
+        simulator.UpdateVisualsEvent -= HandleUpdateVisualsEvent;
 
     }
 
-    private void HandleReadSensorDataEvent()
-    {
-        float data;
-        int currentPhase = simulator.GetCurrentPhase();
-        float SensorValue = simulator.GetData(currentPhase);
 
-        float graphData = ConvertToVisualData(SensorValue, currentPhase);
+    private void HandleUpdateVisualsEvent()
+    {
+        float graphData = ConvertToVisualData(deviceData.inExhaleSpeed, (int)deviceData.BreathingState);
         targetPos = new Vector3(0, graphData, 0); 
         visualPointTrans.position = targetPos;
 
