@@ -72,7 +72,7 @@ public class BreathFMODDriver : MonoBehaviour
     private void Update()
     {
         int state = simulator.GetCurrentPhase();
-        float sensorValue = GetSensorData(state);
+        float sensorValue = GetSensorData();
         float intensity = Mathf.Clamp01(Mathf.Abs(sensorValue));
 
         float targetBreathGain = 0.0f;
@@ -106,19 +106,9 @@ public class BreathFMODDriver : MonoBehaviour
         breathInstance.setParameterByName(breathFrequencyParam, currentBreathFrequency);
     }
 
-    private float GetSensorData(int state)
+    private float GetSensorData()
     {
-        float data = 0;
-        switch (dataOrigin)
-        {
-            case DataOrigin.BreathCycle: return simulator.GetCycleData(state); break;
-            case DataOrigin.ManualSlider: return simulator.GetManualSliderData(); break;
-            case DataOrigin.SensorData: return dataContainer.inExhaleSpeed; break;
-        }
-
-
-
-        return data;
+        return dataContainer.inExhaleSpeed;
     }
 
     private void OnDestroy()
