@@ -108,8 +108,22 @@ public class BreathFMODDriver : MonoBehaviour
 
     private float GetSensorData()
     {
-        return dataContainer.inExhaleSpeed;
+        float sensorData = dataContainer.AirVelocity;
+        float mappedValue = 0;
+
+        if (dataOrigin == DataOrigin.SensorData)
+        {
+             mappedValue = BreathingSensorSimulatorVisualFeedback.MapValueClamped(sensorData, 0, 15, 0, 1);
+        }
+        else
+        {
+            mappedValue = dataContainer.AirVelocity;
+        }
+
+        return mappedValue;
     }
+
+
 
     private void OnDestroy()
     {

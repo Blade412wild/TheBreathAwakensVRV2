@@ -22,7 +22,6 @@ public class MicrocontrollerManager : MonoBehaviour
     [SerializeField] private int baudrate = 9600;
     [SerializeField] private float portSwitchInterval = 250; // ms
     [SerializeField] private BreathingDeviceCommmunicationParserList parserList;
-    [SerializeField] private BreathingDeviceData data;
 
     private SerialPortFinder portFinder;
     private Thread microControllerThread;

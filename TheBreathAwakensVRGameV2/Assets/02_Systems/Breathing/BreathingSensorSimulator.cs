@@ -187,7 +187,7 @@ public class BreathingSensorSimulator : MonoBehaviour
     private void UpdateTemporaryDataContainer(int state, float data)
     {
         deviceData.BreathingState = (BreathingState)state;
-        deviceData.inExhaleSpeed = data;
+        deviceData.AirVelocity = data;
 
     }
 

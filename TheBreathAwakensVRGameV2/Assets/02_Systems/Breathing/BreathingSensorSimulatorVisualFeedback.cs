@@ -54,7 +54,7 @@ public class BreathingSensorSimulatorVisualFeedback : MonoBehaviour
 
     private void HandleUpdateVisualsEvent()
     {
-        float graphData = ConvertToVisualData(deviceData.inExhaleSpeed, (int)deviceData.BreathingState);
+        float graphData = ConvertToVisualData(deviceData.AirVelocity, (int)deviceData.BreathingState);
         targetPos = new Vector3(0, graphData, 0); 
         visualPointTrans.position = targetPos;
 
