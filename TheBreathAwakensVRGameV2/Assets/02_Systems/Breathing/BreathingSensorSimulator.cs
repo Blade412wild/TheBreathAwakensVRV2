@@ -155,6 +155,7 @@ public class BreathingSensorSimulator : MonoBehaviour
     }
     private void HandleSensorMeasurementEvent()
     {
+        if (usingSimulator) return;
         if (FMODdriver.dataOrigin == DataOrigin.ManualSlider)
         {
             if (manualSlider > 0)
