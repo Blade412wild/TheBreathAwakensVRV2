@@ -26,7 +26,7 @@ public class BreathingSensorSimulatorVisualFeedback : MonoBehaviour
     private Vector3 currentPos;
 
     private float startTimeInterpolation;
-    
+
 
 
 
@@ -55,7 +55,7 @@ public class BreathingSensorSimulatorVisualFeedback : MonoBehaviour
     private void HandleUpdateVisualsEvent()
     {
         float graphData = ConvertToVisualData(deviceData.inExhaleSpeed, (int)deviceData.BreathingState);
-        targetPos = new Vector3(0, graphData, 0); 
+        targetPos = new Vector3(0, graphData, 0);
         visualPointTrans.position = targetPos;
 
     }
@@ -70,26 +70,34 @@ public class BreathingSensorSimulatorVisualFeedback : MonoBehaviour
 
     public float ConvertToVisualData(float sensorValue, int phase)
     {
+        Debug.Log("pahse : " + phase + " | breathingState : " + deviceData.BreathingState);
         if (phase == 0)
         {
             float mappedData = MapValueClamped(sensorValue, 0, highestSensorDataPeak, 0, highestVisualPeak);
+            Debug.Log("inhaling GraphData : " + mappedData);
             return mappedData;
         }
         else if (phase == 1)
         {
+            Debug.Log("hjolding : " + 0);
             return visualZeroLine;
+
         }
         else if (phase == 2)
         {
-            float mappedData = MapValueClamped(sensorValue, 0, lowestSensorDataPeak, 0, lowestVisualPeak);
+            float mappedData = MapValueClamped(sensorValue, 0, highestSensorDataPeak, 0, lowestVisualPeak);
+            Debug.Log("exhaling GraphData : " + mappedData);
+
             return mappedData;
         }
         else
         {
+            Debug.Log("else : " + 0);
+
             return visualZeroLine;
         }
     }
-    
+
 
     private void SetupGraph()
     {
@@ -108,7 +116,7 @@ public class BreathingSensorSimulatorVisualFeedback : MonoBehaviour
 
 
         highestSensorDataPeak = highestPeakInhaling;
-        lowestSensorDataPeak  = highestPeakExhaling;
+        lowestSensorDataPeak = highestPeakExhaling;
 
     }
 
