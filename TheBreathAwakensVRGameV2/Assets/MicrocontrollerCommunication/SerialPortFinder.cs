@@ -23,6 +23,12 @@ public class SerialPortFinder
     void Setup()
     {
         availablePorts = SerialPort.GetPortNames();
+        if (Array.IndexOf(availablePorts, "/dev/cu.usbmodem2101") < 0)
+        {
+            Array.Resize(ref availablePorts, availablePorts.Length + 1);
+            availablePorts[availablePorts.Length - 1] = "/dev/cu.usbmodem2101";
+        }
+
         foreach (var p in availablePorts)
             Debug.Log($"Found port: {p}");
 

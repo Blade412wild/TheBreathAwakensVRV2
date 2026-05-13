@@ -70,22 +70,29 @@ public class BreathingSensorSimulatorVisualFeedback : MonoBehaviour
 
     public float ConvertToVisualData(float sensorValue, int phase)
     {
+        //Debug.Log("pahse : " + phase + " | breathingState : " + deviceData.BreathingState);
         if (phase == 0)
         {
             float mappedData = MapValueClamped(sensorValue, 0, highestSensorDataPeak, 0, highestVisualPeak);
+            //Debug.Log("inhaling GraphData : " + mappedData);
             return mappedData;
         }
         else if (phase == 1)
         {
+            //Debug.Log("hjolding : " + 0);
             return visualZeroLine;
         }
         else if (phase == 2)
         {
-            float mappedData = MapValueClamped(sensorValue, 0, lowestSensorDataPeak, 0, lowestVisualPeak);
+            float mappedData = MapValueClamped(sensorValue, 0, highestSensorDataPeak, 0, lowestVisualPeak);
+            //Debug.Log("exhaling GraphData : " + mappedData);
+
             return mappedData;
         }
         else
         {
+            //Debug.Log("else : " + 0);
+
             return visualZeroLine;
         }
     }
