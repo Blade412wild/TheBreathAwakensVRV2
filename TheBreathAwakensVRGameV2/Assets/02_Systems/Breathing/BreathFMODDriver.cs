@@ -71,7 +71,7 @@ public class BreathFMODDriver : MonoBehaviour
 
     private void Update()
     {
-        int state = simulator.GetCurrentPhase();
+        var state = dataContainer.BreathingState;
         float sensorValue = GetSensorData();
         float intensity = Mathf.Clamp01(Mathf.Abs(sensorValue));
 
@@ -79,19 +79,19 @@ public class BreathFMODDriver : MonoBehaviour
         float targetBreathQVolume = 0.0f;
         float targetBreathFrequency = stillFreqValue;
 
-        if (state == 0) // inhale
+        if (state == BreathingState.inhaling) // inhale
         {
             targetBreathGain = intensity;
             targetBreathQVolume = Mathf.Clamp01(intensity * qVolumeMultiplier);
             targetBreathFrequency = Mathf.Lerp(inhaleFreqStart, inhaleFreqEnd, intensity);
         }
-        else if (state == 1) // still
+        else if (state == BreathingState.holdingBreath) // still
         {
             targetBreathGain = stillGainValue;
             targetBreathQVolume = stillQValue;
             targetBreathFrequency = stillFreqValue;
         }
-        else if (state == 2) // exhale
+        else if (state == BreathingState.exhaling) // exhale
         {
             targetBreathGain = intensity;
             targetBreathQVolume = Mathf.Clamp01(intensity * qVolumeMultiplier);
@@ -108,7 +108,7 @@ public class BreathFMODDriver : MonoBehaviour
 
     private float GetSensorData()
     {
-        float sensorData = dataContainer.AirVelocity;
+        float sensorData = dataContainer.inExhaleSpeed;
         float mappedValue = 0;
 
         if (dataOrigin == DataOrigin.SensorData)
@@ -117,7 +117,7 @@ public class BreathFMODDriver : MonoBehaviour
         }
         else
         {
-            mappedValue = dataContainer.AirVelocity;
+            mappedValue = sensorData;
         }
 
         return mappedValue;
