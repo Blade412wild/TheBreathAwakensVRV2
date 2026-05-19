@@ -9,19 +9,14 @@ public class ExtractionManager : MonoBehaviour
     public event Action ExtractionSucceeded;
     public event Action ExtractionFailed;
 
-
+    [Header("control")]
     [SerializeField] private bool StartTimer;
-
-    [Header("Time")]
-    [SerializeField] private float minutes; 
-    [SerializeField] private float seconds;
-
 
     [Header("ref")]
     [SerializeField] private TextMeshProUGUI VisualTimer;
+    [SerializeField] private Timer timer;
+    [SerializeField] private TriggerListener playerEnteredExtractionAreaTriggerListener;
 
-    private Timer timer = new Timer();
-    private float totalTime => minutes * 60 + seconds;
 
 
 
@@ -31,9 +26,10 @@ public class ExtractionManager : MonoBehaviour
     {
         timer.OnSecondPastEvent += UpdateVisualTimer;
         timer.OnTimerIsDone += HandleTimerIsDoneEvent;
-        Debug.Log("totalTime : " +  totalTime);
-        timer.SetTimer(totalTime);
         UpdateVisualTimer();
+
+        playerEnteredExtractionAreaTriggerListener.OnTargetEnteredTriggerEvent += HandlePlayerEnteredExtractionAreaEvent;
+        playerEnteredExtractionAreaTriggerListener?.StartListening();
     }
 
     // Update is called once per frame
@@ -42,19 +38,24 @@ public class ExtractionManager : MonoBehaviour
         if (StartTimer)
         {
             StartTimer = false;
-            timer.Start();
+            timer.StartTimer();
         }
 
-        timer.OnUpdate();
+    }
+
+    private void HandlePlayerEnteredExtractionAreaEvent()
+    {
+        ExtractionSucceeded?.Invoke();
+        timer.StopTimer();
+        Debug.Log("Succeeded Extraction");
     }
 
     private void HandleTimerIsDoneEvent()
     {
         ExtractionFailed?.Invoke();
+        timer.StopTimer();
         Debug.Log("failed Extraction");
     }
-
-
 
     private void UpdateVisualTimer()
     {

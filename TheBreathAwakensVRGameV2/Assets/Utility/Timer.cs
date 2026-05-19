@@ -7,52 +7,43 @@ using UnityEditor;
 using UnityEngine;
 
 [Serializable]
-public class Timer
+public class Timer : MonoBehaviour
 {
     public event Action OnTimerIsDone;
     public event Action<Timer> OnRemoveTimer;
     public event Action OnSecondPastEvent;
     public event Action OnMinutePastEvent;
 
+    [Header("Time")]
+    [SerializeField] private float minutes;
+    [SerializeField] private float seconds;
+
+    [Space]
+    [SerializeField] private bool repeat = false;
+    [SerializeField] private int repeatAmount = 0;
+
     // timer 
+    public float currentTime { get; private set; }
     private float startTime = 0;
-    public float currentTime;
     private float endTime = 0;
-    private bool repeat = false;
-    private int repeatAmount = 0;
     private int currentAmount = 1;
 
     private float second;
     private float minute;
 
     private bool mayUpdate = false;
+    private float totalTime => minutes * 60 + seconds;
 
-    public Timer()
+    private void OnEnable()
     {
-
+        startTime = totalTime;
+        currentTime = startTime;
     }
 
-    //public Timer(float _seconds)
-    //{
-    //    startTime = _seconds;
-    //    currentTime = startTime;
-    //}
-
-    //public Timer(float _seconds, bool _repeat)
-    //{
-    //    startTime = _seconds;
-    //    repeat = _repeat;
-    //    currentTime = startTime;
-    //}
-
-    //public Timer(float _seconds, bool _repeat, int _amount)
-    //{
-    //    startTime = _seconds;
-    //    repeat = _repeat;
-    //    repeatAmount = _amount;
-    //    currentTime = startTime;
-    //}
-
+    private void Update()
+    {
+        OnUpdate();
+    }
     public void SetTimer(float _seconds)
     {
         startTime = _seconds;
@@ -76,22 +67,22 @@ public class Timer
 
     }
 
-    public void Start()
+    public void StartTimer()
     {
         Debug.Log("Start Timer");
         mayUpdate = true;
     }
-    public void Stop()
+    public void StopTimer()
     {
         mayUpdate = false;
     }
 
-    public void Pauze()
+    public void PauzeTimer()
     {
         mayUpdate = false;
     }
 
-    public void Unpause()
+    public void UnpauseTimer()
     {
         mayUpdate = true;
     }
@@ -100,7 +91,7 @@ public class Timer
         currentTime = startTime;
     }
 
-    public void Destroy()
+    public void DestroyTimer()
     {
 
     }
@@ -154,7 +145,7 @@ public class Timer
             {
                 OnTimerIsDone?.Invoke();
                 Reset();
-                Stop();
+                StopTimer();
                 //OnRemoveTimer?.Invoke(this);
             }
         }
