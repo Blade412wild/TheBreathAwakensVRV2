@@ -3,6 +3,7 @@ using UnityEngine.InputSystem;
 
 public class ControlBreathingState : MonoBehaviour
 {
+    [SerializeField] private bool useThis;
     [SerializeField] private InputActionReference reference;
     [SerializeField] private BreathingDeviceData deviceData;
 
@@ -16,6 +17,7 @@ public class ControlBreathingState : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (!useThis) return;
         DecideBreathingState();
     }
 

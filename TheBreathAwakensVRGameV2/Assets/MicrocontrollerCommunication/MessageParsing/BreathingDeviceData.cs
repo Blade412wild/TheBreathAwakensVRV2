@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using static UnityEditor.PlayerSettings;
 
 [CreateAssetMenu(menuName = "BreathingDevice/DataContainer", fileName = "DataContainer")]
 public class BreathingDeviceData : ScriptableObject
@@ -15,6 +16,7 @@ public class BreathingDeviceData : ScriptableObject
     public float inExhaleSpeed;
     public float chestPostion;
     public float AirVelocity;
+    public float inExhaleSpeedAudioScale => 0 + ((inExhaleSpeed - 0) / (15 - 0)) * (100 - 0);
 
 }
 public enum BreathingState { inhaling = 0, holdingBreath = 1, exhaling = 2 };

@@ -7,6 +7,9 @@ public class BreathingSensorSimulatorVisualFeedback : MonoBehaviour
 {
     public event Action ReadSensorDataEvent;
 
+    [Header("Control")]
+    [SerializeField] private bool useSensor;
+
     [Header("References")]
     [SerializeField] private BreathingSensorSimulator simulator;
     [SerializeField] private BreathingDeviceData deviceData;
@@ -34,7 +37,10 @@ public class BreathingSensorSimulatorVisualFeedback : MonoBehaviour
     void Start()
     {
         //simulator.UpdateVisualsEvent += HandleUpdateVisualsEvent;
-        SetupGraph();
+        if (!useSensor)
+        {
+            SetupGraph();
+        }
 
     }
 
@@ -70,29 +76,38 @@ public class BreathingSensorSimulatorVisualFeedback : MonoBehaviour
 
     public float ConvertToVisualData(float sensorValue, int phase)
     {
-        Debug.Log("pahse : " + phase + " | breathingState : " + deviceData.BreathingState);
+        //Debug.Log("pahse : " + phase + " | breathingState : " + deviceData.BreathingState);
         if (phase == 0)
         {
             float mappedData = MapValueClamped(sensorValue, 0, highestSensorDataPeak, 0, highestVisualPeak);
-            Debug.Log("inhaling GraphData : " + mappedData);
+            float mapped2 = MapValue(sensorValue, 0, highestSensorDataPeak, 0, 100);
+            //Debug.Log("inhaling GraphData : " + mappedData);
+
+            //Debug.Log("clamped map : " + mappedData);
+            //Debug.Log("new map : " + mapped2);
+
             return mappedData;
         }
         else if (phase == 1)
         {
-            Debug.Log("hjolding : " + 0);
+            //Debug.Log("hjolding : " + 0);
             return visualZeroLine;
 
         }
         else if (phase == 2)
         {
             float mappedData = MapValueClamped(sensorValue, 0, highestSensorDataPeak, 0, lowestVisualPeak);
-            Debug.Log("exhaling GraphData : " + mappedData);
+            float mapped2 = MapValue(sensorValue, 0, highestSensorDataPeak, 0, 100);
+            //Debug.Log("exhaling GraphData : " + mappedData);
+
+            //Debug.Log("clamped map : " + mappedData);
+            //Debug.Log("new map : " + mapped2);
 
             return mappedData;
         }
         else
         {
-            Debug.Log("else : " + 0);
+            //Debug.Log("else : " + 0);
 
             return visualZeroLine;
         }
@@ -175,5 +190,10 @@ public class BreathingSensorSimulatorVisualFeedback : MonoBehaviour
         t = Math.Clamp(t, 0f, 1f);
 
         return newMin + t * (newMax - newMin);
+    }
+
+    public static float MapValue(float currentValue, float oldMin, float oldMax, float newMin, float newMax)
+    {
+        return newMin + ((currentValue - oldMin) / (oldMax - oldMin)) * (newMax - newMin);
     }
 }
