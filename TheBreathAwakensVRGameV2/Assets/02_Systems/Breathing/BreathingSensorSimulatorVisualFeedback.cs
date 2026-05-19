@@ -80,7 +80,7 @@ public class BreathingSensorSimulatorVisualFeedback : MonoBehaviour
         if (phase == 0)
         {
             float mappedData = MapValueClamped(sensorValue, 0, highestSensorDataPeak, 0, highestVisualPeak);
-            float mapped2 = MapValue(sensorValue, 0, highestSensorDataPeak, 0, 100);
+            //float mapped2 = MapValue(sensorValue, 0, highestSensorDataPeak, 0, 100);
             //Debug.Log("inhaling GraphData : " + mappedData);
 
             //Debug.Log("clamped map : " + mappedData);
@@ -97,7 +97,7 @@ public class BreathingSensorSimulatorVisualFeedback : MonoBehaviour
         else if (phase == 2)
         {
             float mappedData = MapValueClamped(sensorValue, 0, highestSensorDataPeak, 0, lowestVisualPeak);
-            float mapped2 = MapValue(sensorValue, 0, highestSensorDataPeak, 0, 100);
+            //float mapped2 = MapValue(sensorValue, 0, highestSensorDataPeak, 0, 100);
             //Debug.Log("exhaling GraphData : " + mappedData);
 
             //Debug.Log("clamped map : " + mappedData);
