@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System;
 using System.IO.Ports;
+using System.Linq;
 using System.Threading;
 
 public class SerialPortFinder
@@ -8,6 +9,7 @@ public class SerialPortFinder
     public Action<SerialPort> OnSerialPortFound;
 
     private int baudrate;
+    private float scanIntervalMs;
     private SerialPort serial;
     private bool portFound = false;
     private bool stopThread = false;
@@ -17,17 +19,27 @@ public class SerialPortFinder
     public SerialPortFinder(int baudRate, float interval)
     {
         baudrate = baudRate;
+        scanIntervalMs = interval;
         Setup();
     }
 
     void Setup()
     {
         availablePorts = SerialPort.GetPortNames();
-        if (Array.IndexOf(availablePorts, "/dev/cu.usbmodem2101") < 0)
+        if (availablePorts == null || availablePorts.Length == 0)
         {
-            Array.Resize(ref availablePorts, availablePorts.Length + 1);
-            availablePorts[availablePorts.Length - 1] = "/dev/cu.usbmodem2101";
+            Debug.LogWarning("No serial ports found. Check that the device is connected, the driver is installed, and Unity has permission to access USB devices.");
+            return;
         }
+
+        var candidatePorts = availablePorts
+            .Where(p => p.IndexOf("usb", StringComparison.OrdinalIgnoreCase) >= 0
+                     || p.IndexOf("modem", StringComparison.OrdinalIgnoreCase) >= 0
+                     || p.IndexOf("serial", StringComparison.OrdinalIgnoreCase) >= 0)
+            .ToArray();
+
+        if (candidatePorts.Length > 0)
+            availablePorts = candidatePorts;
 
         foreach (var p in availablePorts)
             Debug.Log($"Found port: {p}");
@@ -38,7 +50,6 @@ public class SerialPortFinder
 
     private void TryToFindPort()
     {
-
         for (int i = availablePorts.Length - 1; i >= 0; i--)
         {
             if (stopThread || portFound) break;
@@ -47,11 +58,11 @@ public class SerialPortFinder
             if (TryOpenPort(availablePorts[i]))
                 break;
 
-            Thread.Sleep(200);
+            Thread.Sleep((int)scanIntervalMs);
         }
 
         if (!portFound)
-            Debug.LogWarning("No valid COM port found!");
+            Debug.LogWarning("No valid COM port found! If your device is on macOS, verify the actual /dev/cu.* or /dev/tty.* path.");
     }
 
     private bool TryOpenPort(string portName)
@@ -77,7 +88,7 @@ public class SerialPortFinder
                         Debug.Log($"✅ Connection found on {portName}");
                         portFound = true;
                         //serial.Write("1");
-                        serial.Close();
+                        // Don't close here - let the callback handler manage the connection
                         OnSerialPortFound?.Invoke(serial);
                         return true;
                     }
