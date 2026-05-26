@@ -1,6 +1,3 @@
-using FMODUnity;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices.WindowsRuntime;
 using UnityEngine;
 
 public class OxygonTank : MonoBehaviour
@@ -10,10 +7,11 @@ public class OxygonTank : MonoBehaviour
     public float AvailableOxygon { get; private set; } //  in Liters
     public float MaxVolume { get; private set; } // in Liters
     public bool IsEmpty { get; private set; }
+    public float AvailableOxygonPercentage { get; private set; }
 
 
     private const int TankPressure = 200; // in bar
-    private const float Pi = 3.14159f;
+    private const float Pi = Mathf.PI;
     private float noseRadius = 0.004f; // m //TODO this needs to be calibrated
 
     /*
@@ -43,6 +41,12 @@ public class OxygonTank : MonoBehaviour
      * 
      */
 
+    public void Setup()
+    {
+        CalculateMaxAvailableOxygon();
+        AvailableOxygon = MaxVolume;
+
+    }
 
 
 
@@ -50,9 +54,9 @@ public class OxygonTank : MonoBehaviour
     {
         if (IsEmpty) return;
 
-        float volumeUsed = CalculateOxygonUsed(airVelocity);
+        float oxygonUsed = CalculateOxygonUsed(airVelocity);
 
-        AvailableOxygon -= volumeUsed;
+        AvailableOxygon -= oxygonUsed;
 
         if (AvailableOxygon <= 0)
         {
@@ -63,141 +67,59 @@ public class OxygonTank : MonoBehaviour
         {
             IsEmpty = false;
         }
+
+        CalculatePercentage();
     }
 
     public void Refill(float amount)
     {
         AvailableOxygon += amount;
 
-        if (AvailableOxygon >= TankSize)
+        if (AvailableOxygon >= MaxVolume)
         {
-            AvailableOxygon = TankSize;
+            AvailableOxygon = MaxVolume;
         }
 
         IsEmpty = false;
     }
 
 
-    private float CalculateOxygonUsed(float speed)
+    private float CalculateOxygonUsed(float velocity)
     {
-        float volumeSpeed = CalculateBreathingFlowrate(speed);
+        float volumeSpeed = CalculateBreathingFlowrate(velocity);
         return volumeSpeed * Time.deltaTime;
     }
 
-    private float CalculateBreathingFlowrate(float speed)
+    private float CalculateBreathingFlowrate(float velocity)
     {
-        //TODO CalculateVolumeSpeedPerSecond
+        // radius to surfaceArea(m2)
+        //  A = Pi * r2
+        float surfaceArea = Pi * Mathf.Pow(noseRadius, 2);
 
         // Flowrate
+        //  Q = A * V
+        float flowrate = surfaceArea * velocity;
 
-        return 0;
+
+        return flowrate;
     }
 
-   
-
-}
-
-public class OxygonMask : MonoBehaviour
-{
-
-    [SerializeField] private bool active;
-
-    public bool isOnhead { get; private set; }
-
-    private float glassIntegrity;
-    private float tubeIntergrity;
-
-}
-
-public class SCBA : MonoBehaviour
-{
-    [Header("References")]
-    // SCBA = Self-Contained breathing Apparatus 
-    [SerializeField] private OxygonTank tank;
-    [SerializeField] private OxygonMask mask;
-    [SerializeField] private BreathingDeviceData breathingData;
-
-    [Header("FMOD")]
-    [SerializeField] private EventReference BreathingStateChangeFMOD;
-
-    private BreathingState previousBreathingState;
-    private BreathingState currentBreathingState;
-    [SerializeField] private bool mayUpdate;
-
-    private void Start()
+    private void CalculateAvailableAir()
     {
-        previousBreathingState = BreathingState.holdingBreath;
-        currentBreathingState = BreathingState.holdingBreath;
+        // Available Air
+        //  Va = Vt * P;
 
     }
 
-    private void Update()
+    private void CalculateMaxAvailableOxygon()
     {
-        if (!mayUpdate) return;
-        RunSCBASystem();
+        MaxVolume = TankSize * TankPressure;
     }
 
-    private void RunSCBASystem()
+    private void CalculatePercentage()
     {
-        AnalyzeBreathing();
-
-        if (currentBreathingState == BreathingState.inhaling)
-        {
-            HandleInhaling();
-        }
-    }
-
-    private void HandleInhaling()
-    {
-
-    }
-
-    private void AnalyzeBreathing()
-    {
-        AnalyzeBreathingState();
-
-    }
-
-    private void AnalyzeBreathingState()
-    {
-        currentBreathingState = breathingData.BreathingState;
-        if (currentBreathingState != previousBreathingState)
-        {
-            HandleBreathingStateChange();
-        }
-    }
-
-    private void HandleBreathingStateChange()
-    {
-        previousBreathingState = currentBreathingState;
-        Debug.Log("Breathing state changed to : " + currentBreathingState);
-
-        if (!BreathingStateChangeFMOD.IsNull)
-        {
-            RuntimeManager.PlayOneShot(BreathingStateChangeFMOD);
-        }
-        else
-        {
-            Debug.LogWarning("didn;t reference for breathingStateChanged");
-        }
-
+        AvailableOxygonPercentage = Mapping.MapValueClamped(AvailableOxygon, MaxVolume, 0, 100, 0);
     }
 }
 
-public class SCBASmartWatch : MonoBehaviour
-{
-
-
-
-
-    public void UpdateOxygonUI()
-    {
-
-    }
-
-    public void UpdateTimerUI()
-    {
-
-    }
-}
 
