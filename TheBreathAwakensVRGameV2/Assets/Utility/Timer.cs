@@ -22,11 +22,13 @@ public class Timer : MonoBehaviour
     [SerializeField] private bool repeat = false;
     [SerializeField] private int repeatAmount = 0;
 
+
     // timer 
     public float currentTime { get; private set; }
     private float startTime = 0;
     private float endTime = 0;
     private int currentAmount = 1;
+    private bool infiniteRepeat;
 
     private float second;
     private float minute;
@@ -48,6 +50,13 @@ public class Timer : MonoBehaviour
     {
         startTime = _seconds;
         currentTime = startTime;
+    }
+    public void SetTimer(float _seconds, bool repeat)
+    {
+        startTime = _seconds;
+        currentTime = startTime;
+        this.repeat = true;
+        infiniteRepeat = true;
     }
 
     public void SetTimer(float _seconds, int _amount)
@@ -133,8 +142,9 @@ public class Timer : MonoBehaviour
 
         if (currentTime <= endTime)
         {
+
             //Debug.Log(" Timer is finished, [" + endTime + "] have past");
-            if (repeat == true && currentAmount < repeatAmount)
+            if (repeat == true && currentAmount < repeatAmount || repeat == true && infiniteRepeat == true)
             {
                 var t = Time.time;
                 currentAmount++;

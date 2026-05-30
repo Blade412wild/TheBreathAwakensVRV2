@@ -1,4 +1,6 @@
 using FMODUnity;
+using System;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class SCBA : MonoBehaviour
@@ -12,6 +14,7 @@ public class SCBA : MonoBehaviour
     [SerializeField] private OxygonMask mask;
     [SerializeField] private SCBASmartWatch watch;
     [SerializeField] private BreathingDeviceData breathingData;
+    //[SerializeField] private In_ExhaleSpeedDataReceived received;
 
     [Header("FMOD")]
     [SerializeField] private EventReference BreathingStateChangeFMOD;
@@ -29,6 +32,7 @@ public class SCBA : MonoBehaviour
         tank.Setup();
         watch.UpdateOxygonUI(tank.AvailableOxygon, tank.AvailableOxygonPercentage);
 
+        //received.OnDataReceivedEvent += Test;
     }
 
     private void Update()
@@ -44,7 +48,7 @@ public class SCBA : MonoBehaviour
         if (currentBreathingState == BreathingState.inhaling)
         {
             HandleInhaling();
-            watch.UpdateOxygonUI(tank.AvailableOxygon, tank.AvailableOxygonPercentage);
+            watch.UpdateOxygonUI((int)tank.AvailableOxygon, (int)tank.AvailableOxygonPercentage);
         }
     }
 
@@ -72,7 +76,7 @@ public class SCBA : MonoBehaviour
     private void HandleBreathingStateChange()
     {
         previousBreathingState = currentBreathingState;
-        Debug.Log("Breathing state changed to : " + currentBreathingState);
+        //Debug.Log("Breathing state changed to : " + currentBreathingState);
 
         if (!BreathingStateChangeFMOD.IsNull)
         {
@@ -80,7 +84,7 @@ public class SCBA : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("didn;t reference for breathingStateChanged");
+            //Debug.LogWarning("didn;t reference for breathingStateChanged");
         }
 
     }

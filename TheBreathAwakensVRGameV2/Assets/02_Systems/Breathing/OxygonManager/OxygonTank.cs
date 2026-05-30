@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Rendering;
 
 public class OxygonTank : MonoBehaviour
 {
@@ -6,13 +7,14 @@ public class OxygonTank : MonoBehaviour
 
     public float AvailableOxygon { get; private set; } //  in Liters
     public float MaxVolume { get; private set; } // in Liters
-    public bool IsEmpty { get; private set; }
+    public bool IsEmpty { get; private set; } //= false;
     public float AvailableOxygonPercentage { get; private set; }
 
 
     private const int TankPressure = 200; // in bar
     private const float Pi = Mathf.PI;
     private float noseRadius = 0.004f; // m //TODO this needs to be calibrated
+    private float surfaceArea;
 
     /*
      * formulas
@@ -45,7 +47,7 @@ public class OxygonTank : MonoBehaviour
     {
         CalculateMaxAvailableOxygon();
         AvailableOxygon = MaxVolume;
-
+        surfaceArea = Pi * Mathf.Pow(noseRadius, 2) * 2; // *2 is because of the 2 noseholes 
     }
 
 
@@ -86,29 +88,22 @@ public class OxygonTank : MonoBehaviour
 
     private float CalculateOxygonUsed(float velocity)
     {
-        float volumeSpeed = CalculateBreathingFlowrate(velocity);
-        return volumeSpeed * Time.deltaTime;
+        float volumeSpeed = CalculateBreathingFlowrate(velocity); // in m3/s
+        float volumeSpeedLiters = volumeSpeed * 1000;
+        float oxygonUsed = volumeSpeedLiters * Time.deltaTime;
+
+        //Debug.Log("volumeSpeed = " + volumeSpeed + " m3/s | OxygonUsed : " + volumeSpeedLiters + " L/s");
+        return oxygonUsed; 
     }
 
     private float CalculateBreathingFlowrate(float velocity)
     {
-        // radius to surfaceArea(m2)
-        //  A = Pi * r2
-        float surfaceArea = Pi * Mathf.Pow(noseRadius, 2);
-
         // Flowrate
         //  Q = A * V
         float flowrate = surfaceArea * velocity;
 
 
         return flowrate;
-    }
-
-    private void CalculateAvailableAir()
-    {
-        // Available Air
-        //  Va = Vt * P;
-
     }
 
     private void CalculateMaxAvailableOxygon()
@@ -118,7 +113,7 @@ public class OxygonTank : MonoBehaviour
 
     private void CalculatePercentage()
     {
-        AvailableOxygonPercentage = Mapping.MapValueClamped(AvailableOxygon, MaxVolume, 0, 100, 0);
+        AvailableOxygonPercentage = Mapping.MapValueClamped(AvailableOxygon, 0, MaxVolume, 0, 100);
     }
 }
 

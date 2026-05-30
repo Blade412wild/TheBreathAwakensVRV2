@@ -1,21 +1,18 @@
 ﻿using UnityEngine;
-public class In_ExhaleSpeedDataReceived : DataAction
-{
 
+public class MessageFinishedReceived : DataAction
+{
     public override void OnDataReceived(string value)
     {
         //Debug.Log(value);
         try
         {
-            float parsedData = float.Parse(value);
-            data.inExhaleSpeed = parsedData;
-
+            //Debug.Log("message ended");
             OnDataReceivedEvent?.Invoke();
-
         }
         catch (System.Exception ex)
         {
-            Debug.LogError("In_ExHaleSpeed went wrong " + ex.Message);
+            Debug.LogError("MessageFinishedReceived went wrong " + ex.Message);
         }
     }
 }

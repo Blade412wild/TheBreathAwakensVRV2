@@ -6,6 +6,7 @@ public class BreathingStateDataReceived : DataAction
     {
         try
         {
+            //OnDataReceivedEvent?.Invoke();
             int index = int.Parse(value);
             data.BreathingState = (BreathingState)index;
         }
