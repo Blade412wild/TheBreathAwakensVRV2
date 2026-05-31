@@ -103,7 +103,6 @@ public class BreathingSampleCreator
 
     private void OnSensorMeasurementEvent()
     {
-        Debug.Log("sensor data received");
         if (!CreatingSample) // waiting for first point to be inhaling
         {
             if (data.BreathingState == BreathingState.inhaling)
@@ -112,7 +111,6 @@ public class BreathingSampleCreator
             }
             else
             {
-                Debug.Log("-waiting");
                 return;
             }
 
@@ -143,6 +141,10 @@ public class BreathingSampleCreator
         {
             // SampleFinished
             Debug.Log("--Sample Finished");
+            TestSample.Curve = BreathSampleArrayToAnimationCurveConverter.ConvertSampleToAnimationCurve(TestSample.breathingCycles);
+            TestSample.TotalBreathingCycles = TestSample.breathingCycles.Count;
+            
+
             Deactivate();
         }
         else

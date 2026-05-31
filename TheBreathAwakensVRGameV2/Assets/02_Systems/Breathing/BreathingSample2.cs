@@ -5,6 +5,7 @@ using UnityEngine;
 public class BreathingSample2 : ScriptableObject
 {
     public List<BreathCycle> breathingCycles;// = new List<BreathCycle>();
+    public AnimationCurve Curve;
 
     [Header("info")]
     public int TotalBreathingCycles;
