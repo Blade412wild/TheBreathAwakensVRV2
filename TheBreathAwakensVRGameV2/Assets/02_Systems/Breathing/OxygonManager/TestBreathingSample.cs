@@ -12,6 +12,8 @@ public class TestBreathingSample : MonoBehaviour
     [Range(-15, 15)]
     private float Speed;
 
+    [SerializeField] private int cyclesPerSample;
+
     [Header("Info")]
     [Space]
     [SerializeField]
@@ -39,7 +41,7 @@ public class TestBreathingSample : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        creator = new BreathingSampleCreator(messageFinishedReceived, deviceData, 1, testSample);
+        creator = new BreathingSampleCreator(messageFinishedReceived, deviceData, cyclesPerSample, testSample);
         timer.SetTimer(0.125f, true);
         timer.OnTimerIsDone += SensorEvent;
         timer.StartTimer();
