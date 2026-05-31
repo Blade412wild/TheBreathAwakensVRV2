@@ -174,19 +174,19 @@ public class BreathingSampleCreator
         // if last breathingState in history is same as new state return
         if (breathingStateHistory[breathingStateHistory.Count - 1] == newState)
         {
-            Debug.Log("same as previous");
+            //Debug.Log("same as previous");
             return;
         }
         else
         {
-            Debug.Log("new State so Add");
+            //Debug.Log("new State so Add");
             breathingStateHistory.Add(newState);
         }
 
-        if (breathingStateHistory.Count >= maxBreathingStateHistory)
+        if (breathingStateHistory.Count > maxBreathingStateHistory)
         {
-            Debug.Log("remove first");
-            breathingStateHistory.Remove(0);
+            //Debug.Log("remove first");
+            breathingStateHistory.RemoveAt(0);
         }
 
     }
