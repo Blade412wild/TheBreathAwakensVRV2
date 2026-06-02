@@ -1,6 +1,7 @@
+using System;
 using System.Collections.Generic;
-using UnityEditor.Rendering;
 using UnityEngine;
+using static UnityEditor.Experimental.GraphView.GraphView;
 
 public class TestBreathingSample : MonoBehaviour
 {
@@ -18,7 +19,7 @@ public class TestBreathingSample : MonoBehaviour
     [Space]
     [SerializeField]
     private float threshold;
-    
+
     [SerializeField]
     private List<BreathingState> breathingStateHistory = new List<BreathingState>();
 
@@ -27,7 +28,7 @@ public class TestBreathingSample : MonoBehaviour
 
 
     [SerializeField]
-    private float mappedSpeed; 
+    private float mappedSpeed;
 
     [Header("Refs")]
     [SerializeField] private BreathingSample2 testSample;
@@ -36,40 +37,34 @@ public class TestBreathingSample : MonoBehaviour
     [SerializeField] private MessageFinishedReceived messageFinishedReceived;
 
     private BreathingSampleCreator creator;
+    private BreathingSampleSaver saver;
+    private BreathingSystemManager breathingSystemManager;
+
     private Timer timer = new Timer();
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        creator = new BreathingSampleCreator(messageFinishedReceived, deviceData, cyclesPerSample, testSample);
+        breathingSystemManager = new BreathingSystemManager(messageFinishedReceived, deviceData, cyclesPerSample);
+        breathingSystemManager.Activate();
+
         timer.SetTimer(0.125f, true);
         timer.OnTimerIsDone += SensorEvent;
         timer.StartTimer();
         Speed = 0.0f;
     }
 
+
     // Update is called once per frame
     void Update()
     {
-        creator.OnUpdate();
         timer.OnUpdate();
-
-        if (Activate)
-        {
-            Activate = false;
-            creator.Activate();
-        }
-
-        if (Deactivate)
-        {
-            Deactivate = false;
-            creator.Deactivate();
-        }
+        breathingSystemManager.OnUpdate();
     }
 
     private void RemapSpeed()
     {
-        if(Speed >= threshold * -1 && Speed <= threshold)
+        if (Speed >= threshold * -1 && Speed <= threshold)
         {
             mappedSpeed = 0;
         }
@@ -99,8 +94,6 @@ public class TestBreathingSample : MonoBehaviour
     private void SensorEvent()
     {
         RemapSpeed();
-        breathingStateHistory = creator.breathingStateHistory;
-        currentBreathCycle = creator.currentBreathCycle;
         messageFinishedReceived.OnDataReceived("true");
     }
 }

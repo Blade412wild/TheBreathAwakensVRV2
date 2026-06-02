@@ -7,6 +7,7 @@ public class SCBA : MonoBehaviour
 {
     [Header("Controls")]
     [SerializeField] private bool mayUpdate;
+    [SerializeField] private int maxCyclesPerSample;
 
     [Header("References")]
     // SCBA = Self-Contained breathing Apparatus 
@@ -14,23 +15,20 @@ public class SCBA : MonoBehaviour
     [SerializeField] private OxygonMask mask;
     [SerializeField] private SCBASmartWatch watch;
     [SerializeField] private BreathingDeviceData breathingData;
+    [SerializeField] private MessageFinishedReceived messageFinishedReceived;
     //[SerializeField] private In_ExhaleSpeedDataReceived received;
 
     [Header("FMOD")]
     [SerializeField] private EventReference BreathingStateChangeFMOD;
 
-    private BreathingState previousBreathingState;
-    private BreathingState currentBreathingState;
-
-    //private 
-
-    
+    private BreathingSystemManager breathingSystemManager;
+    private OxygonPrediction oxygonPrediction;
 
     private void Start()
     {
-        previousBreathingState = BreathingState.holdingBreath;
-        currentBreathingState = BreathingState.holdingBreath;
         CheckReferences();
+        breathingSystemManager = new BreathingSystemManager(messageFinishedReceived, breathingData, maxCyclesPerSample);
+
         tank.Setup();
         watch.UpdateOxygonUI(tank.AvailableOxygon, tank.AvailableOxygonPercentage);
 
@@ -45,9 +43,9 @@ public class SCBA : MonoBehaviour
 
     private void RunSCBASystem()
     {
-        AnalyzeBreathing();
+        breathingSystemManager.OnUpdate();
 
-        if (currentBreathingState == BreathingState.inhaling)
+        if (breathingData.BreathingState == BreathingState.inhaling)
         {
             HandleInhaling();
             watch.UpdateOxygonUI((int)tank.AvailableOxygon, (int)tank.AvailableOxygonPercentage);
@@ -57,28 +55,12 @@ public class SCBA : MonoBehaviour
     private void HandleInhaling()
     {
         tank.UseOxygonTank(breathingData.inExhaleSpeed);
-        
-    }
 
-    private void AnalyzeBreathing()
-    {
-        AnalyzeBreathingState();
-
-    }
-
-    private void AnalyzeBreathingState()
-    {
-        currentBreathingState = breathingData.BreathingState;
-        if (currentBreathingState != previousBreathingState)
-        {
-            HandleBreathingStateChange();
-        }
     }
 
     private void HandleBreathingStateChange()
     {
-        previousBreathingState = currentBreathingState;
-        //Debug.Log("Breathing state changed to : " + currentBreathingState);
+
 
         if (!BreathingStateChangeFMOD.IsNull)
         {

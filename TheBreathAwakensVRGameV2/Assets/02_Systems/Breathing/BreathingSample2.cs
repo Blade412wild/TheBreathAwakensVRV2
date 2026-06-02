@@ -8,7 +8,7 @@ public class BreathingSample2 : ScriptableObject
     public string SampleName;
     public string Path;
 
-    public List<BreathCycle> breathingCycles;// = new List<BreathCycle>();
+    public List<BreathCycle> breathingCycles = new List<BreathCycle>();
     public AnimationCurve Curve;
 
     [Header("info")]
