@@ -39,8 +39,11 @@ public class BreathingSampleAnalyzer
         float peakInhaling = GetPeak(totalInhalePoints);
         float peakExhaling = GetPeak(totalexhalePoints);
 
-        float avarageSpeedInhaling = GetAvarageSpeed(totalInhalePoints, sample.TotalDuration);
-        float avarageSpeedExhaling = GetAvarageSpeed(totalexhalePoints, sample.TotalDuration);
+        //float avarageSpeedInhaling = GetAvarageSpeed(totalInhalePoints, sample.TotalDuration);
+        //float avarageSpeedExhaling = GetAvarageSpeed(totalexhalePoints, sample.TotalDuration);
+
+        float avarageSpeedInhaling = CalculateAverageSpeed(totalInhalePoints);
+        float avarageSpeedExhaling = CalculateAverageSpeed(totalexhalePoints);
 
         sample.PeakInhaleSpeed = peakInhaling;
         sample.PeakExhaleSpeed = peakExhaling;
@@ -91,6 +94,29 @@ public class BreathingSampleAnalyzer
         }
 
         return totalSpeed / totalTime;
+    }
+
+    public  float CalculateAverageSpeed(List<SensorDataPoint> list)
+    {
+        if (list == null || list.Count < 2)
+            throw new ArgumentException("At least two list points are required.");
+
+        float totalDistance = 0f;
+
+        for (int i = 1; i < list.Count; i++)
+        {
+            float dt = list[i].Time - list[i - 1].Time;
+
+            if (dt < 0)
+                throw new ArgumentException("Time values must be in ascending order.");
+
+            // Trapezoidal integration
+            totalDistance += (list[i - 1].Value + list[i].Value) * 0.5f * dt;
+        }
+
+        float totalTime = list[^1].Time - list[0].Time;
+
+        return totalTime > 0 ? totalDistance / totalTime : 0f;
     }
 
 }
