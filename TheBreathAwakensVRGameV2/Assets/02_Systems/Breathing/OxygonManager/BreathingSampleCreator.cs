@@ -6,8 +6,7 @@ using UnityEngine;
 
 public class BreathingSampleCreator
 {
-    public event Action BreathingCycleSampleFinished;
-    public event Action BreathingCycleArrayFinished;
+    public event Action<BreathingSample2> BreathingeSampleCreated;
 
 
     private BreathingSensorSimulator simulator;
@@ -38,7 +37,7 @@ public class BreathingSampleCreator
 
     private bool newCycleFlag = false;
 
-    private BreathingSample2 TestSample;
+    private BreathingSample2 currentSample;
 
 
     //private string BreathingSampleFolderPath = "Assets";
@@ -51,7 +50,7 @@ public class BreathingSampleCreator
             this.messageFinishedReceived = messageFinishedReceived;
             this.data = data;
             maxCycles = cyclesPerBreathingSample;
-            this.TestSample = TestSample;
+            this.currentSample = TestSample;
 
         }
         else
@@ -96,7 +95,13 @@ public class BreathingSampleCreator
         stopWatch.Run();
         CreatingSample = true;
 
-        currentBreathCycle = new BreathCycle { Points = new List<SensorDataPoint>() };
+        currentBreathCycle = new BreathCycle
+        {
+            Points = new List<SensorDataPoint>(),
+            InhalePoints = new List<SensorDataPoint>(),
+            ExhalePoints = new List<SensorDataPoint>(),
+            HoldingBreathPoints = new List<SensorDataPoint>(),
+        };
 
         //breathingStateHistory.Clear();
 
@@ -129,7 +134,21 @@ public class BreathingSampleCreator
         else
         {
             CreateSensorDataPoint();
-            currentBreathCycle.Points.Add(currentSensorDataPoint);
+            AddSensorDataPointToCurrentBreathCycle();
+
+        }
+
+    }
+
+    private void AddSensorDataPointToCurrentBreathCycle()
+    {
+        currentBreathCycle.Points.Add(currentSensorDataPoint);
+
+        switch (currentSensorDataPoint.State)
+        {
+            case BreathingState.inhaling: currentBreathCycle.InhalePoints.Add(currentSensorDataPoint); break;
+            case BreathingState.exhaling: currentBreathCycle.ExhalePoints.Add(currentSensorDataPoint); break;
+            case BreathingState.holdingBreath: currentBreathCycle.HoldingBreathPoints.Add(currentSensorDataPoint); break;
 
         }
 
@@ -138,17 +157,21 @@ public class BreathingSampleCreator
     private void BreathCyleFinished()
     {
         currentBreathCycle.duration = stopWatch.currentTime;
-        TestSample.breathingCycles.Add(currentBreathCycle);
+        currentSample.breathingCycles.Add(currentBreathCycle);
 
 
 
-        if (TestSample.breathingCycles.Count > maxCycles - 1) // targetCycles per sample reached
+        if (currentSample.breathingCycles.Count > maxCycles - 1) // targetCycles per sample reached
         {
             // SampleFinished
             Debug.Log("--Sample Finished");
-            TestSample.Curve = BreathSampleArrayToAnimationCurveConverter.ConvertSampleToAnimationCurve(TestSample.breathingCycles);
-            TestSample.TotalBreathingCycles = TestSample.breathingCycles.Count;
-            
+            currentSample.Curve = BreathSampleArrayToAnimationCurveConverter.ConvertSampleToAnimationCurve(currentSample.breathingCycles);
+            currentSample.TotalBreathingCycles = currentSample.breathingCycles.Count;
+            currentSample.TotalDuration = currentBreathCycle.Points[currentBreathCycle.Points.Count-1].Time; // get the last time value of the last 
+            BreathingeSampleCreated?.Invoke(currentSample);
+
+
+
 
             Deactivate();
         }
@@ -187,7 +210,7 @@ public class BreathingSampleCreator
             breathingStateHistory.Add(newState);
             return;
         }
-         //TODO something GOEs wrong with historyt
+        //TODO something GOEs wrong with historyt
         //BreathingState previousState = breathingStateHistory[breathingStateHistory.Count - 1];
         // if last breathingState in history is same as new state return
         if (breathingStateHistory[breathingStateHistory.Count - 1] == newState)

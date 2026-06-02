@@ -1,5 +1,7 @@
 using JetBrains.Annotations;
+using NUnit.Framework;
 using System.Drawing.Text;
+using System.Runtime.InteropServices;
 using UnityEngine;
 
 public class BreathingAnalyzer
@@ -9,89 +11,84 @@ public class BreathingAnalyzer
 
     public BreathingCycle currentCycle { get; private set; }
 
+
     public BreathingCycle[] CurrentBreathingArray { get; private set; }
 
     private float totalDuration;
     private float avarageInhaleSpeed;
 
+    private BreathingSample2 currentSample;
+    private BreathingSampleCreator sampleCreator;
+
+    private BreathingDeviceData BreathingDeviceData;
 
 
 
-    public void Setup()
+    public void Setup(MessageFinishedReceived messageFinishedReceived, BreathingDeviceData data, int cyclesPerBreathingSample, BreathingSample2 TestSample)
     {
+        sampleCreator = new BreathingSampleCreator(messageFinishedReceived, data, cyclesPerBreathingSample, TestSample);
+
 
     }
 
 
 
-    public void SetBreathingArray(BreathingCycle[] breathingArray)
+    public void SetBreathingArray(BreathingSample2 currentSample)
     {
-        this.CurrentBreathingArray = breathingArray;
+        this.currentSample = currentSample;
     }
 
 
 
     public void AnalyzeBreathingSample()
     {
+        float avarageInhaleSpeed = CalculateAvarageSpeed(BreathingState.inhaling);
+        float avarageExhaleSpeed = CalculateAvarageSpeed(BreathingState.exhaling);
 
-        float totalTime = CalculateDurationOfBreathingSample(currentCycle);
-        float avarageSpeed = CalculateAvarageSpeed(currentCycle.InhalingSample, totalTime);
-
+        currentSample.AvarageInhaleSpeed = avarageInhaleSpeed;
+        currentSample.AvarageExhaleSpeed = avarageExhaleSpeed;
     }
 
-    public void AnalyzeBreathingSampleArray()
+    private float CalculateAvarageSpeed(BreathingState state)
     {
 
-    }
-
-
-
-
-    private float CalculateDurationOfBreathingSample(BreathingCycle cycle)
-    {
-        float FullCycleDuration = 0;
-        for (int i = 0; i < phasesAmount; i++)
-        {
-            if (i == 0)
-            {
-                AnimationCurve curve = cycle.InhalingSample.Curve;
-                float time = curve.keys[curve.length - 1].time;
-
-                endPhasesTime[i] = time;
-                FullCycleDuration += time;
-            }
-            else if (i == 1)
-            {
-                float time = cycle.HoldingInBreathTime;
-
-                endPhasesTime[i] = time;
-                FullCycleDuration += time;
-            }
-            else if (i == 2)
-            {
-                AnimationCurve curve = cycle.ExhalingSample.Curve;
-                float time = curve.keys[curve.length - 1].time;
-
-                endPhasesTime[i] = time;
-                FullCycleDuration += time;
-            }
-        }
-        return FullCycleDuration;
-    }
-
-    private float CalculateAvarageSpeed(BreathingSample inhaling, float totalTime)
-    {
         float totalspeed = 0;
 
-        foreach (var key in inhaling.Curve.keys)
+        foreach (BreathCycle cycle in currentSample.breathingCycles)
         {
-            totalspeed += key.value;
+            totalspeed += GetSpeedFromCycle(cycle, state);
         }
 
-        return totalspeed / totalTime;
+
+        return totalspeed / currentSample.TotalDuration;
+    }
+
+    private float GetSpeedFromCycle(BreathCycle cycle, BreathingState state)
+    {
+        float speed = 0;
+
+        if (state == BreathingState.inhaling)
+        {
+            foreach (SensorDataPoint sensorDataPoint in cycle.InhalePoints)
+            {
+                speed += sensorDataPoint.Value;
+            }
+
+        }
+
+        if (state == BreathingState.exhaling)
+        {
+            foreach (SensorDataPoint sensorDataPoint in cycle.ExhalePoints)
+            {
+                speed += sensorDataPoint.Value;
+            }
+
+        }
+        return speed;
     }
 
 }
+
 
 public class OxygonPrediction
 {

@@ -22,6 +22,8 @@ public class SCBA : MonoBehaviour
     private BreathingState previousBreathingState;
     private BreathingState currentBreathingState;
 
+    //private 
+
     
 
     private void Start()
