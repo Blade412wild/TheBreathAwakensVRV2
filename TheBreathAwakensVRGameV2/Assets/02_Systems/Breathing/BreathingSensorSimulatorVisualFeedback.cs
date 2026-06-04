@@ -1,7 +1,5 @@
 using System;
 using UnityEngine;
-using UnityEngine.UI;
-using static UnityEngine.GraphicsBuffer;
 
 public class BreathingSensorSimulatorVisualFeedback : MonoBehaviour
 {
@@ -24,6 +22,8 @@ public class BreathingSensorSimulatorVisualFeedback : MonoBehaviour
     [Header("Sensor")]
     [SerializeField] private float highestSensorDataPeak;
     [SerializeField] private float lowestSensorDataPeak;
+    [SerializeField] private float sensorValueForFullVisual = 3f;
+    [SerializeField] private bool updateFromDeviceDataEveryFrame = true;
 
     private Vector3 targetPos;
     private Vector3 currentPos;
@@ -36,40 +36,61 @@ public class BreathingSensorSimulatorVisualFeedback : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        //simulator.UpdateVisualsEvent += HandleUpdateVisualsEvent;
-        if (!useSensor)
-        {
-            SetupGraph();
-        }
+        SetupGraph();
 
+        if (simulator != null)
+        {
+            simulator.UpdateVisualsEvent += HandleUpdateVisualsEvent;
+        }
+        else
+        {
+            Debug.LogWarning("BreathingSensorSimulatorVisualFeedback: simulator reference is missing.");
+        }
     }
 
     // Update is called once per frame
     void Update()
     {
+        if (visualPointTrans == null) return;
+
+        if (updateFromDeviceDataEveryFrame)
+        {
+            UpdateTargetFromDeviceData();
+        }
+
         currentPos = visualPointTrans.position;
-        HandleUpdateVisualsEvent();
+        UpdatePos();
     }
 
     private void OnDisable()
     {
-        simulator.UpdateVisualsEvent -= HandleUpdateVisualsEvent;
-
+        if (simulator != null)
+        {
+            simulator.UpdateVisualsEvent -= HandleUpdateVisualsEvent;
+        }
     }
 
 
     private void HandleUpdateVisualsEvent()
     {
-        float graphData = ConvertToVisualData(deviceData.inExhaleSpeed, (int)deviceData.BreathingState);
-        targetPos = new Vector3(0, graphData, 0);
-        visualPointTrans.position = targetPos;
-
+        UpdateTargetFromDeviceData();
     }
 
+    private void UpdateTargetFromDeviceData()
+    {
+        if (deviceData == null || visualPointTrans == null)
+            return;
+
+        float sensorValue = GetSensorValue();
+        float graphData = ConvertToVisualData(sensorValue, (int)deviceData.BreathingState);
+        targetPos = new Vector3(0, graphData, 0);
+    }
 
 
     private void UpdatePos()
     {
+        if (visualPointTrans == null) return;
+
         currentPos = Vector3.Lerp(currentPos, targetPos, Time.deltaTime * speed);
         visualPointTrans.position = currentPos;
     }
@@ -79,13 +100,9 @@ public class BreathingSensorSimulatorVisualFeedback : MonoBehaviour
         //Debug.Log("pahse : " + phase + " | breathingState : " + deviceData.BreathingState);
         if (phase == 0)
         {
-            float mappedData = MapValueClamped(sensorValue, 0, highestSensorDataPeak, 0, highestVisualPeak);
-            //float mapped2 = MapValue(sensorValue, 0, highestSensorDataPeak, 0, 100);
+            float sensorPeak = GetPositiveSensorPeak(highestSensorDataPeak);
+            float mappedData = MapValueClamped(Mathf.Abs(sensorValue), 0, sensorPeak, 0, highestVisualPeak);
             //Debug.Log("inhaling GraphData : " + mappedData);
-
-            //Debug.Log("clamped map : " + mappedData);
-            //Debug.Log("new map : " + mapped2);
-
             return mappedData;
         }
         else if (phase == 1)
@@ -96,12 +113,9 @@ public class BreathingSensorSimulatorVisualFeedback : MonoBehaviour
         }
         else if (phase == 2)
         {
-            float mappedData = MapValueClamped(sensorValue, 0, highestSensorDataPeak, 0, lowestVisualPeak);
-            //float mapped2 = MapValue(sensorValue, 0, highestSensorDataPeak, 0, 100);
+            float sensorPeak = GetPositiveSensorPeak(lowestSensorDataPeak);
+            float mappedData = MapValueClamped(Mathf.Abs(sensorValue), 0, sensorPeak, 0, lowestVisualPeak);
             //Debug.Log("exhaling GraphData : " + mappedData);
-
-            //Debug.Log("clamped map : " + mappedData);
-            //Debug.Log("new map : " + mapped2);
 
             return mappedData;
         }
@@ -116,7 +130,18 @@ public class BreathingSensorSimulatorVisualFeedback : MonoBehaviour
 
     private void SetupGraph()
     {
+        if (simulator == null)
+        {
+            Debug.LogWarning("BreathingSensorSimulatorVisualFeedback: simulator reference is missing, cannot setup graph.");
+            return;
+        }
+
         BreathingCycle cycle = simulator.GetCycle();
+        if (cycle == null)
+        {
+            Debug.LogWarning("BreathingSensorSimulatorVisualFeedback: breathing cycle is missing.");
+            return;
+        }
 
         float highestPeakInhaling;
         float lowestPeakInhaling;
@@ -124,15 +149,13 @@ public class BreathingSensorSimulatorVisualFeedback : MonoBehaviour
 
         float highestPeakExhaling;
         float lowestPeakExhaling;
-        GetCurvePeaks(cycle.InhalingSample.Curve, out highestPeakExhaling, out lowestPeakExhaling);
+        GetCurvePeaks(cycle.ExhalingSample.Curve, out highestPeakExhaling, out lowestPeakExhaling);
 
         highestPeakExhaling *= -1;
         lowestPeakExhaling *= -1;
 
-
         highestSensorDataPeak = highestPeakInhaling;
         lowestSensorDataPeak = highestPeakExhaling;
-
     }
 
     private void GetCurvePeaks(AnimationCurve curve, out float highestPeak, out float lowestPeak)
@@ -183,17 +206,32 @@ public class BreathingSensorSimulatorVisualFeedback : MonoBehaviour
     public static float MapValueClamped(float currentValue, float oldMin, float oldMax, float newMin, float newMax)
     {
         if (oldMax == oldMin)
-            throw new ArgumentException("oldMax and oldMin cannot be the same.");
+            return newMin;
 
         float t = (currentValue - oldMin) / (oldMax - oldMin);
 
-        t = Math.Clamp(t, 0f, 1f);
+        t = Mathf.Clamp01(t);
 
         return newMin + t * (newMax - newMin);
     }
 
-    public static float MapValue(float currentValue, float oldMin, float oldMax, float newMin, float newMax)
+    private float GetPositiveSensorPeak(float configuredPeak)
     {
-        return newMin + ((currentValue - oldMin) / (oldMax - oldMin)) * (newMax - newMin);
+        float peak = Mathf.Abs(configuredPeak);
+        if (peak > Mathf.Epsilon)
+            return peak;
+
+        return Mathf.Max(Mathf.Epsilon, sensorValueForFullVisual);
+    }
+
+    private float GetSensorValue()
+    {
+        if (deviceData == null)
+            return 0f;
+
+        if (!Mathf.Approximately(deviceData.AirVelocity, 0f))
+            return deviceData.AirVelocity;
+
+        return deviceData.inExhaleSpeed;
     }
 }

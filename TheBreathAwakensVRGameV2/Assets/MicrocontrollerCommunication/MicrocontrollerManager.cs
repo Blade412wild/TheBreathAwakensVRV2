@@ -63,7 +63,14 @@ public class MicrocontrollerManager : MonoBehaviour
     }
     private void OnDisable()
     {
-        data.IsConnected = false;
+        if (data != null)
+        {
+            data.IsConnected = false;
+        }
+        else
+        {
+            Debug.LogWarning("MicrocontrollerManager.OnDisable: BreathingDeviceData reference is not assigned.");
+        }
 
         CloseMicrocontrollerThread();
 
