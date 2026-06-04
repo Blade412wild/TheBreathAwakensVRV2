@@ -1,8 +1,10 @@
+using NUnit.Framework;
 using System;
+using System.Collections.Generic;
 
 public class BreathingSystemManager
 {
-    public event Action<BreathingSample2> SampleAnalyzedEvent;
+    public event Action<BreathingSampleClass> SampleAnalyzedEvent;
     public event Action BreathingStateChanged;
 
     private BreathingSampleCreator creator;
@@ -15,6 +17,7 @@ public class BreathingSystemManager
     private BreathingState currentBreathingState;
 
     private BreathingDeviceData deviceData;
+    private bool saveFlag;
 
     private bool isActive = false;
 
@@ -31,13 +34,21 @@ public class BreathingSystemManager
 
     }
 
+
     public void OnUpdate()
     {
         if (!isActive) return;
+
         creator.OnUpdate();
+        saver.OnUpdate();
+
         AnalyzeBreathingState();
     }
 
+    public void OnDisable()
+    {
+        saver.OnDisable();
+    }
     public void Activate()
     {
         isActive = true;
@@ -54,12 +65,12 @@ public class BreathingSystemManager
         analyzer.SampleAnalyzedEvent -= HandleSampleAnalyzed;
     }
 
-    private void HandleFinishedCreatingSampleEvent(BreathingSample2 sample)
+    private void HandleFinishedCreatingSampleEvent(BreathingSampleClass sample)
     {
         analyzer.AnalyzeSample(sample);
     }
 
-    private void HandleSampleAnalyzed(BreathingSample2 sample)
+    private void HandleSampleAnalyzed(BreathingSampleClass sample)
     {
         SampleAnalyzedEvent?.Invoke(sample);
         //oxygonPredictionSystem.

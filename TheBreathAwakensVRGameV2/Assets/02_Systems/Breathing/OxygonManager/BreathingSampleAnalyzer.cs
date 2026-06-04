@@ -1,16 +1,9 @@
-using JetBrains.Annotations;
-using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-using System.Drawing.Text;
-using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Unity.VisualScripting;
-using UnityEngine;
 
 public class BreathingSampleAnalyzer
 {
-    public event Action<BreathingSample2> SampleAnalyzedEvent;
+    public event Action<BreathingSampleClass> SampleAnalyzedEvent;
 
     private const int phasesAmount = 3;
     private float[] endPhasesTime = new float[phasesAmount];
@@ -29,7 +22,7 @@ public class BreathingSampleAnalyzer
     private BreathingDeviceData BreathingDeviceData;
 
 
-    public void AnalyzeSample(BreathingSample2 sample)
+    public void AnalyzeSample(BreathingSampleClass sample)
     {
         List<SensorDataPoint> totalInhalePoints = new List<SensorDataPoint>();
         List<SensorDataPoint> totalexhalePoints = new List<SensorDataPoint>();

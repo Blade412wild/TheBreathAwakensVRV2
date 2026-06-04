@@ -1,12 +1,13 @@
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using UnityEngine;
 
 public class BreathingSampleCreator
 {
-    public event Action<BreathingSample2> FinishedCreatingSampleEvent;
+    public event Action<BreathingSampleClass> FinishedCreatingSampleEvent;
 
 
     private BreathingSensorSimulator simulator;
@@ -34,9 +35,10 @@ public class BreathingSampleCreator
     private BreathingState currentBreathingState;
     private BreathingState previousBreathingState;
 
-
+    private List<BreathingSampleClass> breathingSampleStruct = new List<BreathingSampleClass>();
 
     private BreathingSample2 currentSample;
+    private BreathingSampleClass currentBreathingSampleClass;
 
 
     //private string BreathingSampleFolderPath = "Assets";
@@ -89,6 +91,8 @@ public class BreathingSampleCreator
     private void BeginCreatingNewSample()
     {
         currentSample = ScriptableObject.CreateInstance<BreathingSample2>();
+        currentBreathingSampleClass = new BreathingSampleClass { breathingCycles = new List<BreathCycle>() };
+
         BeginCreatingNewCycle();
         CreatingSample = true;
     }
@@ -163,24 +167,32 @@ public class BreathingSampleCreator
 
     private void BreathCyleFinished()
     {
-        Debug.Log("-Cycle finished");
+        //Debug.Log("-Cycle finished");
 
         currentBreathCycle.duration = stopWatch.currentTime;
+
         currentSample.breathingCycles.Add(currentBreathCycle);
+        currentBreathingSampleClass.breathingCycles.Add(currentBreathCycle);
 
 
+        Debug.Log("currentSample : " + currentSample.breathingCycles.Count + " | currentBreathingSampleClass : " + currentBreathingSampleClass.breathingCycles.Count);
 
-        if (currentSample.breathingCycles.Count > maxCycles - 1) // targetCycles per sample reached
+        if (currentSample.breathingCycles.Count > maxCycles - 1 || currentBreathingSampleClass.breathingCycles.Count > maxCycles - 1) // targetCycles per sample reached
         {
             // SampleFinished
             Debug.Log("--Sample Finished");
             currentSample.Curve = BreathSampleArrayToAnimationCurveConverter.ConvertSampleToAnimationCurve(currentSample.breathingCycles);
             currentSample.TotalBreathingCycles = currentSample.breathingCycles.Count;
-            currentSample.TotalDuration = currentBreathCycle.Points[currentBreathCycle.Points.Count-1].Time; // get the last time value of the last 
-            FinishedCreatingSampleEvent?.Invoke(currentSample);
+            currentSample.TotalDuration = currentBreathCycle.Points[currentBreathCycle.Points.Count - 1].Time; // get the last time value of the last 
 
+            currentBreathingSampleClass.Curve = BreathSampleArrayToAnimationCurveConverter.ConvertSampleToAnimationCurve(currentBreathingSampleClass.breathingCycles);
+            currentBreathingSampleClass.TotalBreathingCycles = currentBreathingSampleClass.breathingCycles.Count;
+            currentBreathingSampleClass.TotalDuration = currentBreathCycle.Points[currentBreathCycle.Points.Count - 1].Time;
+
+            breathingStateHistory.Clear();
             CreatingSample = false;
 
+            FinishedCreatingSampleEvent?.Invoke(currentBreathingSampleClass);
         }
         else
         {
@@ -264,5 +276,6 @@ public class BreathingSampleCreator
 
 
 }
+
 
 

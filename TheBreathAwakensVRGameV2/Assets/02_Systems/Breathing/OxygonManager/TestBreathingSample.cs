@@ -6,8 +6,7 @@ using static UnityEditor.Experimental.GraphView.GraphView;
 public class TestBreathingSample : MonoBehaviour
 {
     [Header("Control")]
-    [SerializeField] private bool Activate;
-    [SerializeField] private bool Deactivate;
+    [SerializeField] private bool useThis;
 
     [SerializeField]
     [Range(-15, 15)]
@@ -45,6 +44,8 @@ public class TestBreathingSample : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        if (!useThis) return;
+
         breathingSystemManager = new BreathingSystemManager(messageFinishedReceived, deviceData, cyclesPerSample);
         breathingSystemManager.Activate();
 
@@ -58,8 +59,15 @@ public class TestBreathingSample : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (!useThis) return;
+
         timer.OnUpdate();
         breathingSystemManager.OnUpdate();
+    }
+
+    private void OnDisable()
+    {
+        breathingSystemManager.OnDisable();
     }
 
     private void RemapSpeed()
@@ -96,4 +104,6 @@ public class TestBreathingSample : MonoBehaviour
         RemapSpeed();
         messageFinishedReceived.OnDataReceived("true");
     }
+
+    
 }

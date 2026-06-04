@@ -1,10 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "BreathingCycleArray2", menuName = "Scriptable Objects/BreathingCycleArray2")]
-public class BreathingSample2 : ScriptableObject
+public class BreathingSampleClass
 {
-
     public string SampleName;
     public string Path;
 
@@ -31,5 +29,7 @@ public class BreathingSample2 : ScriptableObject
 
     // between cycles
     public float AvarageTimeBetweenCycles;
-
 }
+
+
+

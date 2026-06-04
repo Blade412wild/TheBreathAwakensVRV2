@@ -28,6 +28,7 @@ public class SCBA : MonoBehaviour
     {
         CheckReferences();
         breathingSystemManager = new BreathingSystemManager(messageFinishedReceived, breathingData, maxCyclesPerSample);
+        breathingSystemManager.Activate();
 
         tank.Setup();
         watch.UpdateOxygonUI(tank.AvailableOxygon, tank.AvailableOxygonPercentage);
@@ -39,6 +40,11 @@ public class SCBA : MonoBehaviour
     {
         if (!mayUpdate) return;
         RunSCBASystem();
+    }
+
+    private void OnDisable()
+    {
+        breathingSystemManager.OnDisable();
     }
 
     private void RunSCBASystem()

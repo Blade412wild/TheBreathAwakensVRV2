@@ -33,14 +33,63 @@ public class BreathingSampleSaver
     private string currentSampleFileName;
 
     private bool createdRunTimeFolder;
+    private bool saveFlag = false;
+    private List<BreathingSampleClass> breathingSampleBuffer = new List<BreathingSampleClass>();
 
-    public void SaveNewBreathSample(BreathingSample2 currentBreathSample)
+    private string folderPath;
+
+    //private bool message
+
+    public BreathingSampleSaver()
     {
-        if(!createdRunTimeFolder)
+        currentDate = DateTime.Now;
+    }
+
+    ~BreathingSampleSaver()
+    {
+        OnDisable();
+    }
+    public void OnUpdate()
+    {
+        //if (saveFlag)
+        //{
+        //    saveFlag = false;
+        //    SaveBuffer();
+        //}
+    }
+
+    public void OnDisable()
+    {
+        if (saveFlag)
+        {
+            saveFlag = false;
+            SaveBuffer();
+        }
+    }
+
+    private void SaveBuffer()
+    {
+        Debug.Log("Save buffer");
+        if (!createdRunTimeFolder)
         {
             createdRunTimeFolder = true;
-            SetupSavingPathbreathingSample();
+            SetupFolders();
         }
+
+        // save buffer
+        foreach (BreathingSampleClass breathingSampleClass in breathingSampleBuffer)
+        {
+            BreathingSample2 breathingSampleScriptableObject = ConvertSampleClassToScriptableObject(breathingSampleClass);
+            Save(breathingSampleScriptableObject);
+        }
+
+        breathingSampleBuffer.Clear();
+        saveFlag = false;
+    }
+
+    private void Save(BreathingSample2 currentBreathSample)
+    {
+
         currentSampleFileName = "Sample " + breathingSampleFileCounter.ToString();
         string fullPath = CurrentSampleFolderPath + pathSeperator + currentSampleFileName + ".asset";
 
@@ -53,11 +102,41 @@ public class BreathingSampleSaver
         {
             Debug.LogWarning("BreathingSample " + currentSampleFileName + " Already Exist");
         }
+
     }
 
-    private void SetupSavingPathbreathingSample() //TODO create folder only when saving
+    private BreathingSample2 ConvertSampleClassToScriptableObject(BreathingSampleClass breathingSampleClass)
     {
-        currentDate = DateTime.Now;
+        BreathingSample2 breathingSampleScriptableObject = ScriptableObject.CreateInstance<BreathingSample2>();
+        breathingSampleScriptableObject.breathingCycles = breathingSampleClass.breathingCycles;
+        breathingSampleScriptableObject.Curve = breathingSampleClass.Curve;
+
+        breathingSampleScriptableObject.TotalBreathingCycles = breathingSampleClass.TotalBreathingCycles;
+        breathingSampleScriptableObject.TotalDuration = breathingSampleClass.TotalDuration;
+
+        breathingSampleScriptableObject.AvarageInhaleSpeed = breathingSampleClass.AvarageInhaleSpeed;
+        breathingSampleScriptableObject.PeakInhaleSpeed = breathingSampleClass.PeakInhaleSpeed;
+
+        breathingSampleScriptableObject.AvarageExhaleSpeed = breathingSampleClass.AvarageExhaleSpeed;
+        breathingSampleScriptableObject.PeakExhaleSpeed = breathingSampleClass.PeakExhaleSpeed;
+
+        breathingSampleScriptableObject.AvarageTimeBetweenCycles = breathingSampleClass.AvarageTimeBetweenCycles;
+
+
+        return breathingSampleScriptableObject;
+
+    }
+
+
+    public void SaveNewBreathSample(BreathingSampleClass breathingSampleClass)
+    {
+        breathingSampleBuffer.Add(breathingSampleClass);
+        saveFlag = true;
+    }
+
+    private void SetupFolders() //TODO create folder only when saving
+    {
+        //currentDate = DateTime.Now;
 
 
         Year = currentDate.Year;
@@ -73,7 +152,7 @@ public class BreathingSampleSaver
         }
 
 
-        currentHour = DateTime.Now.Hour;
+        currentHour = currentDate.Hour;
 
         string hourFolder = currentHour + TimeSeperator + "00";
         string pathTohourFolderFolderName = pathToDateFolderName;
@@ -86,12 +165,13 @@ public class BreathingSampleSaver
         }
 
 
-        currentMinute = DateTime.Now.Minute;
-        currentSecond = DateTime.Now.Second;
+        currentMinute = currentDate.Minute;
+        currentSecond = currentDate.Second;
 
         string runTimeMomentFolderName = currentHour + TimeSeperator + currentMinute + TimeSeperator + currentSecond;
         string pathToRunTimeFolderName = hourTargetPath;
         string runtimePath = pathToRunTimeFolderName + pathSeperator + runTimeMomentFolderName;
+        folderPath = runtimePath;
 
         if (AssetDatabase.IsValidFolder(runtimePath) == false)
         {
@@ -100,5 +180,6 @@ public class BreathingSampleSaver
 
         CurrentSampleFolderPath = runtimePath;
         Debug.Log(CurrentSampleFolderPath);
+
     }
 }
