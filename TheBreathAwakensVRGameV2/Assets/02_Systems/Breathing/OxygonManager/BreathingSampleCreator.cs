@@ -37,7 +37,7 @@ public class BreathingSampleCreator
 
     private List<BreathingSampleClass> breathingSampleStruct = new List<BreathingSampleClass>();
 
-    private BreathingSample2 currentSample;
+    //private BreathingSample2 currentSample;
     private BreathingSampleClass currentBreathingSampleClass;
 
 
@@ -90,7 +90,7 @@ public class BreathingSampleCreator
 
     private void BeginCreatingNewSample()
     {
-        currentSample = ScriptableObject.CreateInstance<BreathingSample2>();
+        //currentSample = ScriptableObject.CreateInstance<BreathingSample2>();
         currentBreathingSampleClass = new BreathingSampleClass { breathingCycles = new List<BreathCycle>() };
 
         BeginCreatingNewCycle();
@@ -171,19 +171,19 @@ public class BreathingSampleCreator
 
         currentBreathCycle.duration = stopWatch.currentTime;
 
-        currentSample.breathingCycles.Add(currentBreathCycle);
+        //currentSample.breathingCycles.Add(currentBreathCycle);
         currentBreathingSampleClass.breathingCycles.Add(currentBreathCycle);
 
 
-        Debug.Log("currentSample : " + currentSample.breathingCycles.Count + " | currentBreathingSampleClass : " + currentBreathingSampleClass.breathingCycles.Count);
+        Debug.Log(" | currentBreathingSampleClass : " + currentBreathingSampleClass.breathingCycles.Count);
 
-        if (currentSample.breathingCycles.Count > maxCycles - 1 || currentBreathingSampleClass.breathingCycles.Count > maxCycles - 1) // targetCycles per sample reached
+        if (/*currentSample.breathingCycles.Count > maxCycles - 1 ||*/ currentBreathingSampleClass.breathingCycles.Count > maxCycles - 1) // targetCycles per sample reached
         {
             // SampleFinished
             Debug.Log("--Sample Finished");
-            currentSample.Curve = BreathSampleArrayToAnimationCurveConverter.ConvertSampleToAnimationCurve(currentSample.breathingCycles);
-            currentSample.TotalBreathingCycles = currentSample.breathingCycles.Count;
-            currentSample.TotalDuration = currentBreathCycle.Points[currentBreathCycle.Points.Count - 1].Time; // get the last time value of the last 
+            //currentSample.Curve = BreathSampleArrayToAnimationCurveConverter.ConvertSampleToAnimationCurve(currentSample.breathingCycles);
+            //currentSample.TotalBreathingCycles = currentSample.breathingCycles.Count;
+            //currentSample.TotalDuration = currentBreathCycle.Points[currentBreathCycle.Points.Count - 1].Time; // get the last time value of the last 
 
             currentBreathingSampleClass.Curve = BreathSampleArrayToAnimationCurveConverter.ConvertSampleToAnimationCurve(currentBreathingSampleClass.breathingCycles);
             currentBreathingSampleClass.TotalBreathingCycles = currentBreathingSampleClass.breathingCycles.Count;

@@ -1,4 +1,5 @@
 using System;
+using System.Security.Cryptography;
 using UnityEngine;
 using static BreathFMODDriver;
 using static UnityEngine.InputSystem.HID.HID;
@@ -48,6 +49,8 @@ public class BreathingSensorSimulator : MonoBehaviour
     private DateTime previousTime;
     private DateTime currentTime;
     private TimeSpan timeSpan;
+
+    private SampleToInputConverter sampleToInputConverter = new SampleToInputConverter();
 
 
 

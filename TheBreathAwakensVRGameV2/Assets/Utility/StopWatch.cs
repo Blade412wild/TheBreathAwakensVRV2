@@ -1,3 +1,4 @@
+using UnityEditor.Rendering;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -11,6 +12,12 @@ public class StopWatch
     private int repeatAmount = 0;
     private int currentAmount = 1;
     private bool mayRun = false;
+
+    public void Setup(float startTime)
+    {
+        this.startTime = startTime;
+        currentTime = startTime;
+    }
 
     
     public void Run()
