@@ -16,6 +16,7 @@ public class SCBA : MonoBehaviour
     [SerializeField] private SCBASmartWatch watch;
     [SerializeField] private BreathingDeviceData breathingData;
     [SerializeField] private MessageFinishedReceived messageFinishedReceived;
+    [SerializeField] private BreathingSystem breathingSystem;
     //[SerializeField] private In_ExhaleSpeedDataReceived received;
 
     [Header("FMOD")]
@@ -27,11 +28,12 @@ public class SCBA : MonoBehaviour
     private void Start()
     {
         CheckReferences();
-        breathingSystemManager = new BreathingSystemManager(messageFinishedReceived, breathingData, maxCyclesPerSample);
-        breathingSystemManager.Activate();
+        //breathingSystemManager = new BreathingSystemManager(messageFinishedReceived, breathingData, maxCyclesPerSample);
+        //breathingSystemManager.Activate();
 
-        tank.Setup();
-        watch.UpdateOxygonUI(tank.AvailableOxygon, tank.AvailableOxygonPercentage);
+        breathingSystem.OnStart();
+        watch.UpdateOxygonPercentageUI(tank.AvailableOxygon, tank.AvailableOxygonPercentage);
+        breathingSystem.OxygonPredictionDoneEvent += (x) => watch.UpdateOxygonEstimation(x);
 
         //received.OnDataReceivedEvent += Test;
     }
@@ -44,23 +46,25 @@ public class SCBA : MonoBehaviour
 
     private void OnDisable()
     {
-        breathingSystemManager.OnDisable();
+        breathingSystem.OnDeactivate();
+        //breathingSystemManager.OnDisable();
     }
 
     private void RunSCBASystem()
     {
-        breathingSystemManager.OnUpdate();
+        //breathingSystemManager.OnUpdate();
+        breathingSystem.OnUpdate();
 
         if (breathingData.BreathingState == BreathingState.inhaling)
         {
             HandleInhaling();
-            watch.UpdateOxygonUI((int)tank.AvailableOxygon, (int)tank.AvailableOxygonPercentage);
+            watch.UpdateOxygonPercentageUI((int)tank.AvailableOxygon, (int)tank.AvailableOxygonPercentage);
         }
     }
 
     private void HandleInhaling()
     {
-        tank.UseOxygonTank(breathingData.inExhaleSpeed);
+        //tank.UseOxygonTank(breathingData.inExhaleSpeed);
 
     }
 

@@ -1,50 +1,35 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
-public class BreathingSampleAnalyzer
+public class SampleAvarageSpeedCorrector : MonoBehaviour
 {
-    public event Action<BreathingSampleClass> SampleAnalyzedEvent;
+    public bool Correct;
 
-    private const int phasesAmount = 3;
-    private float[] endPhasesTime = new float[phasesAmount];
+    public BreathingSample2 sample;
 
-    public BreathingCycle currentCycle { get; private set; }
+    private void Update()
+    {
+        if (Correct)
+        {
+            Correct = false;
+            CorrectSample();
+        }
+    }
 
-
-    public BreathingCycle[] CurrentBreathingArray { get; private set; }
-
-    private float totalDuration;
-    private float avarageInhaleSpeed;
-
-    private BreathingSample2 currentSample;
-    private BreathingSampleCreator sampleCreator;
-
-    private BreathingDeviceData BreathingDeviceData;
-
-
-    public void AnalyzeSample(BreathingSampleClass sample)
+    public void CorrectSample()
     {
         List<SensorDataPoint> totalInhalePoints = new List<SensorDataPoint>();
         List<SensorDataPoint> totalexhalePoints = new List<SensorDataPoint>();
 
         CreateNewDatapointList(sample.breathingCycles, totalInhalePoints, totalexhalePoints);
+        // float inhaleSpeed = CalculateAverageSpeed()
 
-        float peakInhaling = GetPeak(totalInhalePoints);
-        float peakExhaling = GetPeak(totalexhalePoints);
-
-        //float avarageSpeedInhaling = GetAvarageSpeed(totalInhalePoints, sample.TotalDuration);
-        //float avarageSpeedExhaling = GetAvarageSpeed(totalexhalePoints, sample.TotalDuration);
-
-        float avarageSpeedInhaling = CalculateAverageSpeed(totalInhalePoints);
-        float avarageSpeedExhaling = CalculateAverageSpeed(totalexhalePoints);
-
-        sample.PeakInhaleSpeed = peakInhaling;
-        sample.PeakExhaleSpeed = peakExhaling;
+        float avarageSpeedInhaling = CalculateAverageSpeed(totalInhalePoints, sample.TotalDuration);
+        float avarageSpeedExhaling = CalculateAverageSpeed(totalexhalePoints, sample.TotalDuration);
 
         sample.AvarageInhaleSpeed = avarageSpeedInhaling;
         sample.AvarageExhaleSpeed = avarageSpeedExhaling;
-
-        SampleAnalyzedEvent?.Invoke(sample);
     }
 
     private void CreateNewDatapointList(List<BreathCycle> breathCycles, List<SensorDataPoint> totalInhalePoints, List<SensorDataPoint> totalexhalePoints)
@@ -64,19 +49,6 @@ public class BreathingSampleAnalyzer
         }
     }
 
-    private float GetPeak(List<SensorDataPoint> list)
-    {
-        float peak = 0;
-
-        foreach (SensorDataPoint point in list)
-        {
-            if(point.Value > peak)
-                peak = point.Value;
-        }
-
-        return peak;
-    }
-
     private float GetAvarageSpeed(List<SensorDataPoint> list, float totalTime)
     {
         float totalSpeed = 0;
@@ -89,7 +61,8 @@ public class BreathingSampleAnalyzer
         return totalSpeed / totalTime;
     }
 
-    public  float CalculateAverageSpeed(List<SensorDataPoint> list)
+
+    public float CalculateAverageSpeed(List<SensorDataPoint> list, float totalTime)
     {
         if (list == null || list.Count < 2)
             throw new ArgumentException("At least two list points are required.");
@@ -107,7 +80,7 @@ public class BreathingSampleAnalyzer
             totalDistance += (list[i - 1].Value + list[i].Value) * 0.5f * dt;
         }
 
-        float totalTime = list[^1].Time - list[0].Time;
+        //float totalTime = list[^1].Time - list[0].Time;
 
         return totalTime > 0 ? totalDistance / totalTime : 0f;
     }

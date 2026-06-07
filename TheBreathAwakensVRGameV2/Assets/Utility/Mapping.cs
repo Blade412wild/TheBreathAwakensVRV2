@@ -13,4 +13,24 @@ public static class Mapping
 
         return newMin + t * (newMax - newMin);
     }
+
+    public static float MapValue(float currentValue, float oldMin, float oldMax, float newMin, float newMax)
+    {
+        if (oldMax == oldMin)
+            throw new ArgumentException("oldMax and oldMin cannot be the same.");
+
+        float mappedValue = newMin + ((currentValue - oldMin) / (oldMax - oldMin)) * (newMax - newMin);
+
+        if (mappedValue >= newMax)
+        {
+            mappedValue = newMax;
+        }
+
+        if (mappedValue <= newMin)
+        {
+            mappedValue = newMin;
+        }
+
+        return mappedValue;
+    }
 }

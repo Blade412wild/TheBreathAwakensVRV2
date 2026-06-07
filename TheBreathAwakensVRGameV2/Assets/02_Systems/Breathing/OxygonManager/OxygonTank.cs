@@ -3,19 +3,35 @@ using UnityEngine.Rendering;
 
 public class OxygonTank : MonoBehaviour
 {
+    [Header("Settings")]
+    [SerializeField] private float targetMinutes;
+    [SerializeField] private float targetSeconds;
+
+    [SerializeField] private float averageSpeedperCycle;
+    [SerializeField] private float multiplier;
+
     [SerializeField] private float TankSize; // in Liters
+
+
+
 
     public float AvailableOxygon { get; private set; } //  in Liters
     public float MaxVolume { get; private set; } // in Liters
     public bool IsEmpty { get; private set; } //= false;
     public float AvailableOxygonPercentage { get; private set; }
+    public float SurfaceArea { get; private set; }
 
 
     private const int TankPressure = 200; // in bar
     private const float Pi = Mathf.PI;
     private float noseRadius = 0.004f; // m //TODO this needs to be calibrated
-    private float surfaceArea;
 
+    //[Header("testing")]
+    //public float TEST = 1000;
+    //public float Amin;
+    //public float Amax;
+    //public float Bmin;
+    //public float Bmax;
     /*
      * formulas
      * 
@@ -45,20 +61,34 @@ public class OxygonTank : MonoBehaviour
 
     public void Setup()
     {
-        CalculateMaxAvailableOxygon();
+        //CalculateMaxAvailableOxygon();
+
+        
+        SurfaceArea = Pi * Mathf.Pow(noseRadius, 2) * 2; // *2 is because of the 2 noseholes 
+        CalculateVolumeBasedOnTimeAndSample(averageSpeedperCycle);
         AvailableOxygon = MaxVolume;
-        surfaceArea = Pi * Mathf.Pow(noseRadius, 2) * 2; // *2 is because of the 2 noseholes 
     }
 
+    public void UpdateOxygonTankVolume(float recordedflowRate)
+    {
+        MaxVolume = recordedflowRate * GetTargetTime();
+        AvailableOxygon = MaxVolume;
 
+    }
 
-    public void UseOxygonTank(float airVelocity)
+    public void UpdatePercentage()
+    {
+
+        CalculatePercentage();
+    }
+
+    public void UseOxygonTank(float airVelocity, float time)
     {
         if (IsEmpty) return;
 
-        float oxygonUsed = CalculateOxygonUsed(airVelocity);
-
+        float oxygonUsed = CalculateOxygonUsed(airVelocity, time);
         AvailableOxygon -= oxygonUsed;
+        //Debug.Log("oxygon Left : " + AvailableOxygon);
 
         if (AvailableOxygon <= 0)
         {
@@ -73,6 +103,12 @@ public class OxygonTank : MonoBehaviour
         CalculatePercentage();
     }
 
+    public void Refill()
+    {
+        AvailableOxygon = MaxVolume;
+        IsEmpty = false;
+    }
+
     public void Refill(float amount)
     {
         AvailableOxygon += amount;
@@ -85,22 +121,22 @@ public class OxygonTank : MonoBehaviour
         IsEmpty = false;
     }
 
-
-    private float CalculateOxygonUsed(float velocity)
+    public float CalculateOxygonUsed(float velocity, float time)
     {
         float volumeSpeed = CalculateBreathingFlowrate(velocity); // in m3/s
         float volumeSpeedLiters = volumeSpeed * 1000;
-        float oxygonUsed = volumeSpeedLiters * Time.deltaTime;
 
-        //Debug.Log("volumeSpeed = " + volumeSpeed + " m3/s | OxygonUsed : " + volumeSpeedLiters + " L/s");
-        return oxygonUsed; 
+        float oxygonUsed = volumeSpeedLiters * time;
+
+        //Debug.Log("volumeSpeed = " + volumeSpeed + " m3/s | volumeSpeedLiters : " + volumeSpeedLiters + " L/s" + " | OxygonUsed : " + oxygonUsed);
+        return oxygonUsed;
     }
 
-    private float CalculateBreathingFlowrate(float velocity)
+    public float CalculateBreathingFlowrate(float velocity)
     {
         // Flowrate
         //  Q = A * V
-        float flowrate = surfaceArea * velocity;
+        float flowrate = SurfaceArea * velocity;
 
 
         return flowrate;
@@ -113,7 +149,34 @@ public class OxygonTank : MonoBehaviour
 
     private void CalculatePercentage()
     {
-        AvailableOxygonPercentage = Mapping.MapValueClamped(AvailableOxygon, 0, MaxVolume, 0, 100);
+        if (AvailableOxygon > 0)
+        {
+            AvailableOxygonPercentage = Mapping.MapValue(AvailableOxygon, 0, MaxVolume, 0, 100);
+        }
+        else
+        {
+            AvailableOxygonPercentage = 0.0f;
+        }
+        //float test = Mapping.MapValue(TEST, Amin, Amax, Bmin, Bmax);
+        //Debug.Log("test percentage : " + test);
+    }
+
+    private float GetTargetTime()
+    {
+        float seconds = targetSeconds;
+        seconds += targetMinutes * 60;
+        return seconds;
+    }
+
+    private void CalculateVolumeBasedOnTimeAndSample(float averageSpeed)
+    {
+        float targetTime = GetTargetTime();
+        float flowRate = CalculateBreathingFlowrate(averageSpeed) * 1000.0f;
+        MaxVolume = flowRate * targetTime;
+        MaxVolume *= multiplier;
+
+        //float flowRatePerCycle = flowRate / timeDuration;
+
     }
 }
 
