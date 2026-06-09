@@ -19,6 +19,15 @@ public class BreathFMODDriver : MonoBehaviour
     [SerializeField] private string breathStateParam = "BreathState";
     [SerializeField] private bool sendBreathStateParam;
 
+    [Header("Reverb")]
+    [SerializeField] private bool controlEventReverbLevel = true;
+    [Range(0f, 1f)]
+    [SerializeField] private float eventReverbLevel = 0.75f;
+    [SerializeField] private string breathReverbParam = "audioBreathReverb";
+    [SerializeField] private bool sendBreathReverbParam;
+    [Range(0f, 1f)]
+    [SerializeField] private float breathReverbAmount = 0.75f;
+
     [Header("Frequency Mapping (Hz)")]
     [SerializeField] private float frequencyMin = 660f;      // Exhale: lower frequency
     [SerializeField] private float frequencyMax = 4070f;     // Inhale: higher frequency
@@ -56,7 +65,21 @@ public class BreathFMODDriver : MonoBehaviour
     [SerializeField] private float breathStopThreshold = 0.0005f;
     [SerializeField] private float attackSpeed = 3.5f;
     [SerializeField] private float releaseSpeed = 2.0f;
-    [SerializeField] private float exhaleReleaseSpeed = 4.5f;
+    [SerializeField] private float exhaleReleaseSpeed = 9.0f;
+
+    [Header("Release Tail")]
+    [SerializeField] private float inhaleTailGainDb = -28f;
+    [SerializeField] private float inhaleTailQVolumeDb = 1f;
+    [SerializeField] private float inhaleTailGainSmoothSpeed = 5f;
+    [SerializeField] private float inhaleTailQSmoothSpeed = 5f;
+    [SerializeField] private float exhaleTailGainDb = -26f;
+    [SerializeField] private float exhaleTailQVolumeDb = 2f;
+    [SerializeField] private float exhaleTailGainSmoothSpeed = 8f;
+    [SerializeField] private float exhaleTailQSmoothSpeed = 8f;
+    [SerializeField] private float releaseMinInputScale = 0.5f;
+    [SerializeField] private float releaseInputMemoryFalloff = 1.5f;
+    [SerializeField] private float releasePauseThreshold = 0.02f;
+    [SerializeField] private float releaseGainStopThreshold = 0.05f;
 
     private EventInstance breathInstance;
 
@@ -65,7 +88,10 @@ public class BreathFMODDriver : MonoBehaviour
     private float currentBreathFrequency;
     private float currentBreathState;
     private float outputEnvelope;
+    private float lastInputIntensity;
+    private float releaseInputScale = 1f;
     private bool eventIsPlaying;
+    private bool hadBreathInputLastFrame;
     private BreathingState lastActiveBreathingState = BreathingState.holdingBreath;
 
     private void Start()
@@ -96,6 +122,7 @@ public class BreathFMODDriver : MonoBehaviour
         breathInstance.setParameterByName(breathQVolumeParam, currentBreathQVolume);
         breathInstance.setParameterByName(breathFrequencyParam, currentBreathFrequency);
         SetBreathStateParameter(currentBreathState);
+        ApplyBreathReverbControl();
         breathInstance.start();
         breathInstance.setPaused(true);
         eventIsPlaying = false;
@@ -107,41 +134,61 @@ public class BreathFMODDriver : MonoBehaviour
         float intensity = GetBreathIntensity();
         bool hasBreathInput = intensity >= breathStartThreshold
             || (eventIsPlaying && intensity > breathStopThreshold);
+        bool hasActiveBreathInput = hasBreathInput && sensorState != BreathingState.holdingBreath;
 
-        if (hasBreathInput && sensorState != BreathingState.holdingBreath)
+        if (hasActiveBreathInput)
+        {
+            lastInputIntensity = Mathf.Max(
+                intensity,
+                Mathf.MoveTowards(lastInputIntensity, intensity, Time.deltaTime * releaseInputMemoryFalloff));
+        }
+        else if (hadBreathInputLastFrame)
+        {
+            releaseInputScale = Mathf.Lerp(
+                Mathf.Clamp01(releaseMinInputScale),
+                1f,
+                Mathf.Clamp01(lastInputIntensity));
+        }
+
+        if (hasActiveBreathInput)
         {
             lastActiveBreathingState = sensorState;
         }
 
         BreathingState effectiveState = sensorState;
-        if (!hasBreathInput && eventIsPlaying && lastActiveBreathingState != BreathingState.holdingBreath)
+        if (!hasActiveBreathInput && eventIsPlaying && lastActiveBreathingState != BreathingState.holdingBreath)
         {
             effectiveState = lastActiveBreathingState;
         }
 
         outputEnvelope = Mathf.MoveTowards(
             outputEnvelope,
-            hasBreathInput ? 1f : 0f,
-            Time.deltaTime * GetEnvelopeSpeed(hasBreathInput, effectiveState));
+            hasActiveBreathInput ? 1f : 0f,
+            Time.deltaTime * GetEnvelopeSpeed(hasActiveBreathInput, effectiveState));
 
-        if (hasBreathInput && !eventIsPlaying)
+        if (hasActiveBreathInput && !eventIsPlaying)
         {
             PrepareFrequencyForBreathStart(effectiveState);
             breathInstance.setPaused(false);
             eventIsPlaying = true;
         }
 
-        if (!hasBreathInput && outputEnvelope <= 0f)
+        if (!hasActiveBreathInput
+            && outputEnvelope <= releasePauseThreshold
+            && currentBreathGain <= fmodParamMin + releaseGainStopThreshold)
         {
             SendSilentParameters(effectiveState);
             breathInstance.setPaused(true);
             eventIsPlaying = false;
+            lastInputIntensity = 0f;
+            hadBreathInputLastFrame = hasActiveBreathInput;
             return;
         }
 
-        if (!hasBreathInput && effectiveState == BreathingState.exhaling)
+        if (!hasActiveBreathInput && effectiveState != BreathingState.holdingBreath)
         {
-            FadeOutExhaleWithoutFrequencySweep();
+            FadeOutBreathWithoutFrequencySweep(effectiveState);
+            hadBreathInputLastFrame = hasActiveBreathInput;
             return;
         }
 
@@ -195,6 +242,8 @@ public class BreathFMODDriver : MonoBehaviour
         breathInstance.setParameterByName(breathQVolumeParam, currentBreathQVolume);
         breathInstance.setParameterByName(breathFrequencyParam, currentBreathFrequency);
         SetBreathStateParameter(currentBreathState);
+        ApplyBreathReverbControl();
+        hadBreathInputLastFrame = hasActiveBreathInput;
     }
 
     private float GetBreathIntensity()
@@ -237,13 +286,28 @@ public class BreathFMODDriver : MonoBehaviour
         if (hasBreathInput)
             return attackSpeed;
 
-        return state == BreathingState.exhaling ? exhaleReleaseSpeed : releaseSpeed;
+        float baseSpeed = state == BreathingState.exhaling ? exhaleReleaseSpeed : releaseSpeed;
+        return baseSpeed / Mathf.Max(0.01f, releaseInputScale);
     }
 
-    private void FadeOutExhaleWithoutFrequencySweep()
+    private void FadeOutBreathWithoutFrequencySweep(BreathingState state)
     {
-        currentBreathGain = Mathf.Lerp(currentBreathGain, fmodParamMin, Time.deltaTime * exhaleGainSmoothSpeed);
-        currentBreathQVolume = Mathf.Lerp(currentBreathQVolume, fmodParamMin, Time.deltaTime * exhaleQSmoothSpeed);
+        bool isExhale = state == BreathingState.exhaling;
+        float tailGainDb = isExhale ? exhaleTailGainDb : inhaleTailGainDb;
+        float tailQVolumeDb = isExhale ? exhaleTailQVolumeDb : inhaleTailQVolumeDb;
+        float tailGainSpeed = isExhale ? exhaleTailGainSmoothSpeed : inhaleTailGainSmoothSpeed;
+        float tailQSpeed = isExhale ? exhaleTailQSmoothSpeed : inhaleTailQSmoothSpeed;
+
+        float dynamicSpeedScale = 1f / Mathf.Max(0.01f, releaseInputScale);
+        float tailGain = DbToFmodParam(tailGainDb, gainMinDb, gainMaxDb);
+        float tailQVolume = DbToFmodParam(tailQVolumeDb, qVolumeMinDb, qVolumeMaxDb);
+        float releaseFade = Mathf.InverseLerp(releasePauseThreshold, 1f, outputEnvelope);
+
+        float targetGain = Mathf.Lerp(fmodParamMin, tailGain, releaseFade);
+        float targetQVolume = Mathf.Lerp(fmodParamMin, tailQVolume, releaseFade);
+
+        currentBreathGain = Mathf.Lerp(currentBreathGain, targetGain, Time.deltaTime * tailGainSpeed * dynamicSpeedScale);
+        currentBreathQVolume = Mathf.Lerp(currentBreathQVolume, targetQVolume, Time.deltaTime * tailQSpeed * dynamicSpeedScale);
 
         breathInstance.setParameterByName(breathGainParam, currentBreathGain);
         breathInstance.setParameterByName(breathQVolumeParam, currentBreathQVolume);
@@ -280,6 +344,28 @@ public class BreathFMODDriver : MonoBehaviour
             return;
 
         breathInstance.setParameterByName(breathStateParam, value);
+    }
+
+    private void ApplyBreathReverbControl()
+    {
+        SetEventReverbLevel();
+        SetBreathReverbParameter();
+    }
+
+    private void SetEventReverbLevel()
+    {
+        if (!controlEventReverbLevel)
+            return;
+
+        breathInstance.setReverbLevel(0, Mathf.Clamp01(eventReverbLevel));
+    }
+
+    private void SetBreathReverbParameter()
+    {
+        if (!sendBreathReverbParam || string.IsNullOrEmpty(breathReverbParam))
+            return;
+
+        breathInstance.setParameterByName(breathReverbParam, Mathf.Clamp01(breathReverbAmount));
     }
 
     /// <summary>

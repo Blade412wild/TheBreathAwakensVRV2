@@ -259,6 +259,7 @@
 			<destination>{fbff02b3-2e9b-4ee7-94fd-957194e8e7e7}</destination>
 			<destination>{0bd221b5-d41e-4ab8-a1f8-32953b81337b}</destination>
 			<destination>{4d4b732d-7461-441b-9eab-daa0de6c4f21}</destination>
+			<destination>{670718d2-dff2-48e0-883a-16e0e1908e76}</destination>
 			<destination>{8b598b14-acbe-484d-b734-355f2e2d6cb4}</destination>
 			<destination>{0ace5cb8-50f0-4e4d-8222-ccf22e912e13}</destination>
 		</relationship>
@@ -406,6 +407,11 @@
 			<value>11.7984829</value>
 		</property>
 	</object>
+	<object class="DistortionEffect" id="{670718d2-dff2-48e0-883a-16e0e1908e76}">
+		<property name="level">
+			<value>0.394999981</value>
+		</property>
+	</object>
 	<object class="MultibandEqEffect" id="{8b598b14-acbe-484d-b734-355f2e2d6cb4}">
 		<property name="filterTypeA">
 			<value>9</value>
@@ -426,14 +432,18 @@
 	</object>
 	<object class="MultibandEqEffect" id="{0ace5cb8-50f0-4e4d-8222-ccf22e912e13}">
 		<property name="frequencyA">
-			<value>931.261902</value>
+			<value>1422.23901</value>
 		</property>
 		<property name="qualityA">
-			<value>0.570868909</value>
+			<value>0.549824476</value>
 		</property>
 	</object>
 	<object class="MixerBusFader" id="{6daa2ade-d894-4788-a533-557138127131}" />
-	<object class="SFXReverbEffect" id="{2449a4ac-0d81-4f8e-9545-d4382b2b850a}" />
+	<object class="SFXReverbEffect" id="{2449a4ac-0d81-4f8e-9545-d4382b2b850a}">
+		<property name="decayTime">
+			<value>2500</value>
+		</property>
+	</object>
 	<object class="Automator" id="{3f71efbd-861f-49f5-8cce-8234f35fc307}">
 		<property name="nameOfPropertyBeingAutomated">
 			<value>gain</value>
