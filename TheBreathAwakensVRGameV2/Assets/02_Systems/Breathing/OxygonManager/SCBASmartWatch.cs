@@ -23,7 +23,7 @@ public class SCBASmartWatch : MonoBehaviour
 
     public void UpdateOxygonPercentageUI(float amount, float percentage)
     {
-        oxygonAmountPercecntageText.text = percentage.ToString() + " %";
+        //oxygonAmountPercecntageText.text = percentage.ToString() + " %";
     }
 
     public void UpdateOxygonEstimation(TimeLeftStruct value)

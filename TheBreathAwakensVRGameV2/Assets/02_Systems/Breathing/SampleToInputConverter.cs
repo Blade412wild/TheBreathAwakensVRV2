@@ -38,6 +38,7 @@ public class SampleToInputConverter : MonoBehaviour
 
     private void Update()
     {
+        if (!update) return;
         HandleStopWatch();
         UpdateDataContainer(currentTime, sample.Curve, dataContainer);
 
