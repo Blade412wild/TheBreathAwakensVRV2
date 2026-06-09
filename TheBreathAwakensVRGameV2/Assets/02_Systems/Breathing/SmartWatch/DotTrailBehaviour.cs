@@ -103,8 +103,9 @@ public class DotTrailBehaviour : MonoBehaviour
     {
         if (deActivePoints.Count <= 0) return;
         TrailPoint trailPoint = deActivePoints.Pop();
+
         trailPoint.Position = dot.localPosition;
-        trailPoint.Transform.localPosition = dot.localPosition;
+
         trailPointsActiveBuffer.Push(trailPoint);
 
         //Debug.Log("trailPoint = " + trailPoint + " x | count : " + trailPointsActiveBuffer.Count + " x "/* + " | OxygonUsed : " + oxygonUsed*/);
@@ -135,11 +136,17 @@ public class DotTrailBehaviour : MonoBehaviour
         {
             trailPoint = activePoints[i];
 
-            pos = trailPoint.Transform.localPosition;
-            //pos = trailPoint.Position;
+            pos = trailPoint.Position;
+
             velocity = speed * moveDir * Time.deltaTime;
             pos += velocity;
+
+            // updating new pos 
+            trailPoint.Position = pos;
             trailPoint.Transform.localPosition = pos;
+
+            // updating list trailpoint (not a reference type)
+            activePoints[i] = trailPoint;
 
             if (pos.x < threshold)
             {
@@ -181,8 +188,8 @@ public class DotTrailBehaviour : MonoBehaviour
 
         for (int i = 0; i < activePoints.Count; i++)
         {
-            //linePositionsArray[i] = activePoints[i].Position;
-            linePositionsArray[i] = activePoints[i].Transform.localPosition;
+            linePositionsArray[i] = activePoints[i].Position;
+            //linePositionsArray[i] = activePoints[i].Transform.localPosition;
         }
 
         return linePositionsArray;
