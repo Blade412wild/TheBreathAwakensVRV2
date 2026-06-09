@@ -7,8 +7,6 @@ public class BreathingFeedbackFeature : MonoBehaviour
     [Header("Control")]
     [SerializeField] private bool useFeature;
 
-
-
     [Header("Visuals")]
     [SerializeField] private float highestVisualPeak;
     [SerializeField] private float lowestVisualPeak;
