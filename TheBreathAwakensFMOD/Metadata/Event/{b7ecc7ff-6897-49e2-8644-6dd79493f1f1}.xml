@@ -262,6 +262,7 @@
 			<destination>{670718d2-dff2-48e0-883a-16e0e1908e76}</destination>
 			<destination>{8b598b14-acbe-484d-b734-355f2e2d6cb4}</destination>
 			<destination>{0ace5cb8-50f0-4e4d-8222-ccf22e912e13}</destination>
+			<destination>{ac8245be-49ab-4f5f-bb2c-e2121c5ccf17}</destination>
 		</relationship>
 	</object>
 	<object class="MixerBusPanner" id="{111f6db3-37b0-4c69-b561-900fd08216ab}" />
@@ -409,7 +410,7 @@
 	</object>
 	<object class="DistortionEffect" id="{670718d2-dff2-48e0-883a-16e0e1908e76}">
 		<property name="level">
-			<value>0.394999981</value>
+			<value>0.604999959</value>
 		</property>
 	</object>
 	<object class="MultibandEqEffect" id="{8b598b14-acbe-484d-b734-355f2e2d6cb4}">
@@ -432,10 +433,15 @@
 	</object>
 	<object class="MultibandEqEffect" id="{0ace5cb8-50f0-4e4d-8222-ccf22e912e13}">
 		<property name="frequencyA">
-			<value>1422.23901</value>
+			<value>633.932007</value>
 		</property>
 		<property name="qualityA">
 			<value>0.549824476</value>
+		</property>
+	</object>
+	<object class="GainEffect" id="{ac8245be-49ab-4f5f-bb2c-e2121c5ccf17}">
+		<property name="gain">
+			<value>-9</value>
 		</property>
 	</object>
 	<object class="MixerBusFader" id="{6daa2ade-d894-4788-a533-557138127131}" />
