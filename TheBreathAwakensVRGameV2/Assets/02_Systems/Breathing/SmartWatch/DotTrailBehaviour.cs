@@ -31,8 +31,6 @@ public class DotTrailBehaviour : MonoBehaviour
     private Vector2 pos;
     private Vector2 velocity;
 
-    private Vector2[] linePositionsArray;
-
     private Stack<TrailPoint> trailPointsActiveBuffer = new Stack<TrailPoint>();
     private Stack<TrailPoint> trailPointsDeActiveBuffer = new Stack<TrailPoint>();
 
@@ -44,6 +42,7 @@ public class DotTrailBehaviour : MonoBehaviour
     {
         if (!useOwnUpdate) return;
         Init();
+        Activate();
     }
 
     private void Update()
@@ -65,7 +64,29 @@ public class DotTrailBehaviour : MonoBehaviour
     {
         SetupTrail();
         threshold = ThresholdTrans.localPosition.x;
+    }
+
+    public void OnUpdate()
+    {
+        UpdateActiveTrailpoints();
+    }
+
+
+    public void Activate()
+    {
         messagefinishedEvent.OnDataReceivedEvent += HandleMessageFinishedEvent;
+
+    }
+
+    public void Deactivate()
+    {
+        messagefinishedEvent.OnDataReceivedEvent -= HandleMessageFinishedEvent;
+    }
+
+
+    public void OnDeactivation()
+    {
+        messagefinishedEvent.OnDataReceivedEvent -= HandleMessageFinishedEvent;
 
     }
     private void SetupTrail()
@@ -92,11 +113,6 @@ public class DotTrailBehaviour : MonoBehaviour
             allPoints.Add(point);
             gameObject.SetActive(false);
         }
-
-    }
-    public void OnDeactivation()
-    {
-        messagefinishedEvent.OnDataReceivedEvent -= HandleMessageFinishedEvent;
 
     }
     private void HandleMessageFinishedEvent()

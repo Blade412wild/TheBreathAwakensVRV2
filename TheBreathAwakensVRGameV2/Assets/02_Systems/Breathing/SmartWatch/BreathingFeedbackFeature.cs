@@ -1,11 +1,15 @@
+using System;
 using System.Drawing.Text;
 using TMPro;
 using UnityEngine;
 
 public class BreathingFeedbackFeature : MonoBehaviour
 {
+    public event Action<Vector2> dotChangedPos;
+
     [Header("Control")]
     [SerializeField] private bool useFeature;
+    [SerializeField] private bool useOwnUpdate;
 
     [Header("Visuals")]
     [SerializeField] private float highestVisualPeak;
@@ -18,9 +22,9 @@ public class BreathingFeedbackFeature : MonoBehaviour
 
     [Header("References")]
     [SerializeField] private RectTransform dot;
+    [SerializeField] private DotTrailBehaviour dotTrailBehaviour;
     [SerializeField] private BreathingDeviceData dataContainer;
     [SerializeField] private MessageFinishedReceived messageFinishedReceived;
-
 
     private Vector2 dotpos;
     private Vector2 dotPosTarget;
@@ -28,28 +32,58 @@ public class BreathingFeedbackFeature : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        messageFinishedReceived.OnDataReceivedEvent += UpdateDotPos;
+        if (!useOwnUpdate) return;
+        Init();
+        Actvate();
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (!useFeature) return;
+        if (!useOwnUpdate) return;
     }
 
     private void OnDisable()
     {
-        messageFinishedReceived.OnDataReceivedEvent -= UpdateDotPos;
+        if (!useOwnUpdate) return;
+        Deactivate();
     }
 
-    private void UpdateDotPos()
+    public void Init()
+    {
+        dotTrailBehaviour.Init();
+    }
+
+    public void OnUpdate()
+    {
+        dotTrailBehaviour.OnUpdate();
+    }
+
+    public void Actvate()
+    {
+        messageFinishedReceived.OnDataReceivedEvent += HandleDataReceivedEvent;
+        dotTrailBehaviour.Activate();
+
+    }
+
+    public void Deactivate()
+    {
+        messageFinishedReceived.OnDataReceivedEvent -= HandleDataReceivedEvent;
+        dotTrailBehaviour.Deactivate();
+
+    }
+
+    public void OnDeactivation()
+    {
+        messageFinishedReceived.OnDataReceivedEvent -= HandleDataReceivedEvent;
+        dotTrailBehaviour.OnDeactivation();
+    }
+
+    private void HandleDataReceivedEvent()
     {
         GetTargetPos(dataContainer.BreathingState, dataContainer.inExhaleSpeed);
         dot.localPosition = dotPosTarget;
-
     }
-
-
 
     private void GetTargetPos(BreathingState currentState, float speed)
     {

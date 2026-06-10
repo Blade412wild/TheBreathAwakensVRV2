@@ -17,6 +17,7 @@ public class SCBA : MonoBehaviour
     [SerializeField] private BreathingDeviceData breathingData;
     [SerializeField] private MessageFinishedReceived messageFinishedReceived;
     [SerializeField] private BreathingSystem breathingSystem;
+    [SerializeField] private ExtractionManager extractionManager;
     //[SerializeField] private In_ExhaleSpeedDataReceived received;
 
     [Header("FMOD")]
@@ -34,6 +35,7 @@ public class SCBA : MonoBehaviour
         breathingSystem.OnStart();
         watch.UpdateOxygonPercentageUI(tank.AvailableOxygon, tank.AvailableOxygonPercentage);
         breathingSystem.OxygonPredictionDoneEvent += (x) => watch.UpdateOxygonEstimation(x);
+        extractionManager.UpdateVisualTimerEvent += (x) => watch.UpdateExtraction(x);
 
         //received.OnDataReceivedEvent += Test;
     }
@@ -48,6 +50,9 @@ public class SCBA : MonoBehaviour
     {
         breathingSystem.OnDeactivate();
         //breathingSystemManager.OnDisable();
+        breathingSystem.OxygonPredictionDoneEvent -= (x) => watch.UpdateOxygonEstimation(x);
+        extractionManager.UpdateVisualTimerEvent -= (x) => watch.UpdateExtraction(x);
+
     }
 
     private void RunSCBASystem()

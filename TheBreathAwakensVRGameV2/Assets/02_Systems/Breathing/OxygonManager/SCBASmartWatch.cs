@@ -20,6 +20,10 @@ public class SCBASmartWatch : MonoBehaviour
 
 
 
+    public void Init()
+    {
+
+    }
 
     public void UpdateOxygonPercentageUI(float amount, float percentage)
     {
@@ -29,40 +33,15 @@ public class SCBASmartWatch : MonoBehaviour
     public void UpdateOxygonEstimation(TimeLeftStruct value)
     {
 
-        oxygonEstimation.text = SetTime(value);
+        oxygonEstimation.text = TimeLeftConversions.ConvertTimeToDigitalClock(value);
     }
 
     public void UpdateExtraction(TimeLeftStruct value)
     {
-        Extraction.text = SetTime(value);
+        Extraction.text = TimeLeftConversions.ConvertTimeToDigitalClock(value);
     }
 
-    private string SetTime(TimeLeftStruct value)
-    {
-        string minutes = "0";
 
-        if (value.Minutes < 10)
-        {
-            minutes += value.Minutes;
-        }
-        else
-        {
-            minutes = value.Minutes.ToString();
-        }
-
-        string seconds = "0";
-
-        if (value.Seconds < 10)
-        {
-            seconds += value.Seconds;
-        }
-        else
-        {
-            seconds = value.Seconds.ToString();
-        }
-
-        return minutes + ":" + seconds;
-    }
 
 }
 

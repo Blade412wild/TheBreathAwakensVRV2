@@ -6,6 +6,8 @@ using System;
 
 public class ExtractionManager : MonoBehaviour
 {
+    public event Action<TimeLeftStruct> UpdateVisualTimerEvent;
+
     public event Action ExtractionSucceeded;
     public event Action ExtractionFailed;
 
@@ -17,16 +19,15 @@ public class ExtractionManager : MonoBehaviour
     [SerializeField] private Timer timer;
     [SerializeField] private TriggerListener playerEnteredExtractionAreaTriggerListener;
 
-
-
+    private TimeLeftStruct timeLeft = new TimeLeftStruct();
 
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        timer.OnSecondPastEvent += UpdateVisualTimer;
+        timer.OnSecondPastEvent += handleTimerSecondPast;
         timer.OnTimerIsDone += HandleTimerIsDoneEvent;
-        UpdateVisualTimer();
+        //handleTimerSecondPast();
 
         playerEnteredExtractionAreaTriggerListener.OnTargetEnteredTriggerEvent += HandlePlayerEnteredExtractionAreaEvent;
         playerEnteredExtractionAreaTriggerListener?.StartListening();
@@ -39,6 +40,8 @@ public class ExtractionManager : MonoBehaviour
         {
             StartTimer = false;
             timer.StartTimer();
+            timeLeft = TimeLeftConversions.CreateLeftStruct(timer.currentTime);
+            
         }
 
     }
@@ -57,9 +60,11 @@ public class ExtractionManager : MonoBehaviour
         Debug.Log("failed Extraction");
     }
 
-    private void UpdateVisualTimer()
+    private void handleTimerSecondPast()
     {
-        string digitalTime = TimeToDIgitalClockConverter.ConvertTime(timer.currentTime);
-        VisualTimer.text = digitalTime;
+        Debug.Log("second passed");
+        UpdateVisualTimerEvent?.Invoke(timer.timeleft);
+        //string digitalTime = TimeLeftConversions.ConvertTimeToDigitalClock(timeLeft);
+        //VisualTimer.text = digitalTime;
     }
 }

@@ -14,6 +14,8 @@ public class Timer : MonoBehaviour
     public event Action OnSecondPastEvent;
     public event Action OnMinutePastEvent;
 
+    public TimeLeftStruct timeleft = new TimeLeftStruct();
+
     [Header("Time")]
     [SerializeField] private float minutes;
     [SerializeField] private float seconds;
@@ -50,6 +52,7 @@ public class Timer : MonoBehaviour
     {
         startTime = _seconds;
         currentTime = startTime;
+        timeleft.TotalSeconds = (int)_seconds;
     }
     public void SetTimer(float _seconds, bool repeat)
     {
@@ -57,12 +60,14 @@ public class Timer : MonoBehaviour
         currentTime = startTime;
         this.repeat = true;
         infiniteRepeat = true;
+        timeleft.TotalSeconds = (int)_seconds;
     }
 
     public void SetTimer(float _seconds, int _amount)
     {
         startTime = _seconds;
         currentTime = startTime;
+        timeleft.TotalSeconds = (int)_seconds;
 
         if (_amount > 0)
         {
@@ -98,6 +103,7 @@ public class Timer : MonoBehaviour
     public void Reset()
     {
         currentTime = startTime;
+
     }
 
     public void DestroyTimer()
@@ -121,21 +127,26 @@ public class Timer : MonoBehaviour
         if (second >= 1.0f)
         {
             second = 0.0f;
+
+            timeleft = TimeLeftConversions.CreateLeftStruct(currentTime);
+
             OnSecondPastEvent?.Invoke();
         }
         else
         {
-            second++;
+            second += Time.deltaTime;
         }
 
         if (minute >= 60.0f)
         {
+            
             minute = 0.0f;
+
             OnMinutePastEvent?.Invoke();
         }
         else
         {
-            minute++;
+            minute += Time.deltaTime;
         }
 
 
