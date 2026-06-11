@@ -19,10 +19,34 @@ public class BreathFMODDriver : MonoBehaviour
     [SerializeField] private string breathStateParam = "BreathState";
     [SerializeField] private bool sendBreathStateParam;
 
+    [Header("Mask Resonance Parameter Names")]
+    [SerializeField] private bool sendMaskResonanceParams;
+    [SerializeField] private string maskLowFreqParam = "maskLowFreq";
+    [SerializeField] private string maskLowGainParam = "maskLowGain";
+    [SerializeField] private string maskLowQParam = "maskLowQ";
+    [SerializeField] private string maskMidFreqParam = "maskMidFreq";
+    [SerializeField] private string maskMidGainParam = "maskMidGain";
+    [SerializeField] private string maskMidQParam = "maskMidQ";
+    [SerializeField] private string maskHighFreqParam = "maskHighFreq";
+    [SerializeField] private string maskHighGainParam = "maskHighGain";
+    [SerializeField] private string maskHighQParam = "maskHighQ";
+
     [Header("Reverb")]
     [SerializeField] private bool controlEventReverbLevel = true;
     [Range(0f, 1f)]
     [SerializeField] private float eventReverbLevel = 0.75f;
+    [SerializeField] private bool scaleReverbWithBreathRate = true;
+    [Range(0f, 1f)]
+    [SerializeField] private float slowBreathReverbAmount = 0.72f;
+    [Range(0f, 1f)]
+    [SerializeField] private float fastBreathReverbAmount = 0.42f;
+    [Range(0f, 1f)]
+    [SerializeField] private float intenseBreathReverbReduction = 0.18f;
+    [Range(0f, 1f)]
+    [SerializeField] private float idleReverbAmount = 0f;
+    [SerializeField] private Vector2 breathPhaseDurationRange = new Vector2(0.35f, 2.0f);
+    [SerializeField] private float breathRateSmoothSpeed = 4f;
+    [SerializeField] private float reverbReleaseSmoothSpeed = 10f;
     [SerializeField] private string breathReverbParam = "audioBreathReverb";
     [SerializeField] private bool sendBreathReverbParam;
     [Range(0f, 1f)]
@@ -45,6 +69,23 @@ public class BreathFMODDriver : MonoBehaviour
     [SerializeField] private float qVolumeMaxDb = 12.5f;
     [SerializeField] private float qVolumeStillDb = 0f;
 
+    [Header("Mask Resonance Mapping")]
+    [SerializeField] private Vector2 lowResonanceHz = new Vector2(175f, 300f);
+    [SerializeField] private Vector2 midResonanceHz = new Vector2(500f, 600f);
+    [SerializeField] private Vector2 highResonanceHz = new Vector2(700f, 1000f);
+    [SerializeField] private float lowResonanceGainDb = 6f;
+    [SerializeField] private float midResonanceGainDb = 4.5f;
+    [SerializeField] private float highResonanceGainDb = 5.5f;
+    [SerializeField] private float inhaleLowGainMultiplier = 0.65f;
+    [SerializeField] private float inhaleMidGainMultiplier = 1.0f;
+    [SerializeField] private float inhaleHighGainMultiplier = 1.15f;
+    [SerializeField] private float exhaleLowGainMultiplier = 1.15f;
+    [SerializeField] private float exhaleMidGainMultiplier = 0.9f;
+    [SerializeField] private float exhaleHighGainMultiplier = 0.65f;
+    [SerializeField] private Vector2 maskResonanceQRange = new Vector2(2.2f, 6.0f);
+    [SerializeField] private float maskResonanceMotionAmount = 0.12f;
+    [SerializeField] private float maskResonanceSmoothSpeed = 7f;
+
     [Header("FMOD Parameter 0-10 Scaling")]
     // FMOD parameters are set to 0-10 range in Studio
     [SerializeField] private float fmodParamMin = 0f;
@@ -58,28 +99,36 @@ public class BreathFMODDriver : MonoBehaviour
     [SerializeField] private float exhaleQSmoothSpeed = 18.0f;
     [SerializeField] private float exhaleFrequencySmoothSpeed = 22.0f;
 
+    [Header("Input Smoothing")]
+    [SerializeField] private float inputAttackSmoothSpeed = 18f;
+    [SerializeField] private float activeInputFallSmoothSpeed = 7f;
+    [SerializeField] private float inhaleInputReleaseSmoothSpeed = 2.6f;
+    [SerializeField] private float exhaleInputReleaseSmoothSpeed = 2.2f;
+    [SerializeField] private float smoothedInputStopThreshold = 0.015f;
+
     [Header("Control")]
     public DataOrigin dataOrigin = DataOrigin.SensorData;
     [SerializeField] private float sensorSpeedForFullIntensity = 6f;
     [SerializeField] private float breathStartThreshold = 0.001f;
     [SerializeField] private float breathStopThreshold = 0.0005f;
     [SerializeField] private float attackSpeed = 3.5f;
-    [SerializeField] private float releaseSpeed = 2.0f;
-    [SerializeField] private float exhaleReleaseSpeed = 9.0f;
+    [SerializeField] private float releaseSpeed = 1.8f;
+    [SerializeField] private float exhaleReleaseSpeed = 3.4f;
 
     [Header("Release Tail")]
     [SerializeField] private float inhaleTailGainDb = -28f;
     [SerializeField] private float inhaleTailQVolumeDb = 1f;
-    [SerializeField] private float inhaleTailGainSmoothSpeed = 5f;
-    [SerializeField] private float inhaleTailQSmoothSpeed = 5f;
+    [SerializeField] private float inhaleTailGainSmoothSpeed = 3.8f;
+    [SerializeField] private float inhaleTailQSmoothSpeed = 3.8f;
     [SerializeField] private float exhaleTailGainDb = -26f;
     [SerializeField] private float exhaleTailQVolumeDb = 2f;
-    [SerializeField] private float exhaleTailGainSmoothSpeed = 8f;
-    [SerializeField] private float exhaleTailQSmoothSpeed = 8f;
+    [SerializeField] private float exhaleTailGainSmoothSpeed = 4.6f;
+    [SerializeField] private float exhaleTailQSmoothSpeed = 4.6f;
     [SerializeField] private float releaseMinInputScale = 0.5f;
     [SerializeField] private float releaseInputMemoryFalloff = 1.5f;
     [SerializeField] private float releasePauseThreshold = 0.02f;
     [SerializeField] private float releaseGainStopThreshold = 0.05f;
+    [SerializeField] private bool pauseEventWhenSilent;
 
     private EventInstance breathInstance;
 
@@ -87,11 +136,26 @@ public class BreathFMODDriver : MonoBehaviour
     private float currentBreathQVolume;
     private float currentBreathFrequency;
     private float currentBreathState;
+    private float currentMaskLowFreq;
+    private float currentMaskLowGain;
+    private float currentMaskLowQ;
+    private float currentMaskMidFreq;
+    private float currentMaskMidGain;
+    private float currentMaskMidQ;
+    private float currentMaskHighFreq;
+    private float currentMaskHighGain;
+    private float currentMaskHighQ;
+    private float smoothedInputIntensity;
+    private float currentBreathRate;
+    private float targetBreathRate;
+    private float lastActivePhaseStartTime = -1f;
+    private float currentDynamicReverbAmount;
     private float outputEnvelope;
     private float lastInputIntensity;
     private float releaseInputScale = 1f;
     private bool eventIsPlaying;
     private bool hadBreathInputLastFrame;
+    private BreathingState previousRawActiveState = BreathingState.holdingBreath;
     private BreathingState lastActiveBreathingState = BreathingState.holdingBreath;
 
     private void Start()
@@ -105,9 +169,8 @@ public class BreathFMODDriver : MonoBehaviour
 
         if (dataOrigin != DataOrigin.SensorData && simulator == null)
         {
-            Debug.LogError("BreathFMODDriver: simulator reference is missing for the selected data origin.");
-            enabled = false;
-            return;
+            Debug.LogWarning("BreathFMODDriver: simulator reference is missing. Falling back to SensorData/DataContainer input.");
+            dataOrigin = DataOrigin.SensorData;
         }
 
         // Initialize to neutral/holding breath state
@@ -115,6 +178,16 @@ public class BreathFMODDriver : MonoBehaviour
         currentBreathQVolume = DbToFmodParam(qVolumeStillDb, qVolumeMinDb, qVolumeMaxDb);
         currentBreathFrequency = HzToFmodParam(frequencyStill);
         currentBreathState = (float)BreathingState.holdingBreath;
+        currentMaskLowFreq = lowResonanceHz.x;
+        currentMaskMidFreq = midResonanceHz.x;
+        currentMaskHighFreq = highResonanceHz.x;
+        currentMaskLowGain = 0f;
+        currentMaskMidGain = 0f;
+        currentMaskHighGain = 0f;
+        currentMaskLowQ = maskResonanceQRange.x;
+        currentMaskMidQ = maskResonanceQRange.x;
+        currentMaskHighQ = maskResonanceQRange.x;
+        currentDynamicReverbAmount = breathReverbAmount;
         outputEnvelope = 0f;
 
         breathInstance = CreateBreathEventInstance();
@@ -123,6 +196,7 @@ public class BreathFMODDriver : MonoBehaviour
         breathInstance.setParameterByName(breathFrequencyParam, currentBreathFrequency);
         SetBreathStateParameter(currentBreathState);
         ApplyBreathReverbControl();
+        ApplyMaskResonanceParameters();
         breathInstance.start();
         breathInstance.setPaused(true);
         eventIsPlaying = false;
@@ -131,13 +205,23 @@ public class BreathFMODDriver : MonoBehaviour
     private void Update()
     {
         BreathingState sensorState = dataContainer.BreathingState;
-        float intensity = GetBreathIntensity();
-        bool hasBreathInput = intensity >= breathStartThreshold
-            || (eventIsPlaying && intensity > breathStopThreshold);
-        bool hasActiveBreathInput = hasBreathInput && sensorState != BreathingState.holdingBreath;
+        float rawIntensity = GetBreathIntensity();
+        bool rawHasActiveBreathInput = rawIntensity >= breathStartThreshold
+            && sensorState != BreathingState.holdingBreath;
 
-        if (hasActiveBreathInput)
+        UpdateBreathRate(sensorState, rawHasActiveBreathInput);
+        float intensity = SmoothInputIntensity(rawIntensity, sensorState, rawHasActiveBreathInput);
+        bool hasActiveBreathInput = rawHasActiveBreathInput;
+        bool isReleasingBreath = !rawHasActiveBreathInput
+            && eventIsPlaying
+            && lastActiveBreathingState != BreathingState.holdingBreath
+            && (smoothedInputIntensity > smoothedInputStopThreshold
+                || outputEnvelope > releasePauseThreshold
+                || currentBreathGain > fmodParamMin + releaseGainStopThreshold);
+
+        if (rawHasActiveBreathInput)
         {
+            lastActiveBreathingState = sensorState;
             lastInputIntensity = Mathf.Max(
                 intensity,
                 Mathf.MoveTowards(lastInputIntensity, intensity, Time.deltaTime * releaseInputMemoryFalloff));
@@ -150,20 +234,21 @@ public class BreathFMODDriver : MonoBehaviour
                 Mathf.Clamp01(lastInputIntensity));
         }
 
-        if (hasActiveBreathInput)
-        {
-            lastActiveBreathingState = sensorState;
-        }
-
         BreathingState effectiveState = sensorState;
-        if (!hasActiveBreathInput && eventIsPlaying && lastActiveBreathingState != BreathingState.holdingBreath)
+        if (sensorState == BreathingState.holdingBreath
+            && eventIsPlaying
+            && lastActiveBreathingState != BreathingState.holdingBreath)
+        {
+            effectiveState = lastActiveBreathingState;
+        }
+        else if (!hasActiveBreathInput && eventIsPlaying && lastActiveBreathingState != BreathingState.holdingBreath)
         {
             effectiveState = lastActiveBreathingState;
         }
 
         outputEnvelope = Mathf.MoveTowards(
             outputEnvelope,
-            hasActiveBreathInput ? 1f : 0f,
+            rawHasActiveBreathInput ? 1f : 0f,
             Time.deltaTime * GetEnvelopeSpeed(hasActiveBreathInput, effectiveState));
 
         if (hasActiveBreathInput && !eventIsPlaying)
@@ -173,19 +258,22 @@ public class BreathFMODDriver : MonoBehaviour
             eventIsPlaying = true;
         }
 
-        if (!hasActiveBreathInput
+        if (!rawHasActiveBreathInput
             && outputEnvelope <= releasePauseThreshold
             && currentBreathGain <= fmodParamMin + releaseGainStopThreshold)
         {
             SendSilentParameters(effectiveState);
-            breathInstance.setPaused(true);
-            eventIsPlaying = false;
+            if (pauseEventWhenSilent)
+            {
+                breathInstance.setPaused(true);
+                eventIsPlaying = false;
+            }
             lastInputIntensity = 0f;
             hadBreathInputLastFrame = hasActiveBreathInput;
             return;
         }
 
-        if (!hasActiveBreathInput && effectiveState != BreathingState.holdingBreath)
+        if (isReleasingBreath && effectiveState != BreathingState.holdingBreath)
         {
             FadeOutBreathWithoutFrequencySweep(effectiveState);
             hadBreathInputLastFrame = hasActiveBreathInput;
@@ -236,6 +324,7 @@ public class BreathFMODDriver : MonoBehaviour
         currentBreathQVolume = Mathf.Lerp(currentBreathQVolume, targetBreathQVolume, Time.deltaTime * qSpeed);
         currentBreathFrequency = Mathf.Lerp(currentBreathFrequency, targetBreathFrequency, Time.deltaTime * frequencySpeed);
         currentBreathState = (float)effectiveState;
+        UpdateMaskResonance(effectiveState, intensity);
 
         // Send to FMOD
         breathInstance.setParameterByName(breathGainParam, currentBreathGain);
@@ -243,12 +332,13 @@ public class BreathFMODDriver : MonoBehaviour
         breathInstance.setParameterByName(breathFrequencyParam, currentBreathFrequency);
         SetBreathStateParameter(currentBreathState);
         ApplyBreathReverbControl();
+        ApplyMaskResonanceParameters();
         hadBreathInputLastFrame = hasActiveBreathInput;
     }
 
     private float GetBreathIntensity()
     {
-        if (dataOrigin == DataOrigin.SensorData)
+        if (dataOrigin == DataOrigin.SensorData || simulator == null)
         {
             return BreathingSensorSimulatorVisualFeedback.MapValueClamped(
                 Mathf.Abs(dataContainer.inExhaleSpeed),
@@ -265,6 +355,63 @@ public class BreathFMODDriver : MonoBehaviour
 
         int phase = simulator.GetCurrentPhase();
         return Mathf.Clamp01(Mathf.Abs(simulator.GetCycleData(phase)));
+    }
+
+    private float SmoothInputIntensity(float rawIntensity, BreathingState sensorState, bool rawHasActiveBreathInput)
+    {
+        float targetIntensity = rawHasActiveBreathInput ? rawIntensity : 0f;
+        float smoothSpeed;
+
+        if (rawHasActiveBreathInput)
+        {
+            smoothSpeed = targetIntensity >= smoothedInputIntensity
+                ? inputAttackSmoothSpeed
+                : activeInputFallSmoothSpeed;
+        }
+        else
+        {
+            smoothSpeed = lastActiveBreathingState == BreathingState.exhaling
+                ? exhaleInputReleaseSmoothSpeed
+                : inhaleInputReleaseSmoothSpeed;
+        }
+
+        smoothedInputIntensity = Mathf.MoveTowards(
+            smoothedInputIntensity,
+            targetIntensity,
+            Time.deltaTime * smoothSpeed);
+
+        if (!rawHasActiveBreathInput && smoothedInputIntensity < smoothedInputStopThreshold)
+        {
+            smoothedInputIntensity = 0f;
+        }
+
+        return smoothedInputIntensity;
+    }
+
+    private void UpdateBreathRate(BreathingState sensorState, bool rawHasActiveBreathInput)
+    {
+        if (rawHasActiveBreathInput && sensorState != previousRawActiveState)
+        {
+            if (lastActivePhaseStartTime >= 0f)
+            {
+                float phaseDuration = Mathf.Max(0.01f, Time.time - lastActivePhaseStartTime);
+                float fastDuration = Mathf.Min(breathPhaseDurationRange.x, breathPhaseDurationRange.y);
+                float slowDuration = Mathf.Max(breathPhaseDurationRange.x, breathPhaseDurationRange.y);
+                targetBreathRate = 1f - Mathf.InverseLerp(fastDuration, slowDuration, phaseDuration);
+            }
+
+            lastActivePhaseStartTime = Time.time;
+            previousRawActiveState = sensorState;
+        }
+        else if (!rawHasActiveBreathInput && previousRawActiveState != BreathingState.holdingBreath)
+        {
+            previousRawActiveState = BreathingState.holdingBreath;
+        }
+
+        currentBreathRate = Mathf.Lerp(
+            currentBreathRate,
+            targetBreathRate,
+            Time.deltaTime * breathRateSmoothSpeed);
     }
 
     private EventInstance CreateBreathEventInstance()
@@ -311,6 +458,79 @@ public class BreathFMODDriver : MonoBehaviour
 
         breathInstance.setParameterByName(breathGainParam, currentBreathGain);
         breathInstance.setParameterByName(breathQVolumeParam, currentBreathQVolume);
+        ApplyBreathReverbControl();
+        UpdateMaskResonance(state, outputEnvelope * lastInputIntensity);
+        ApplyMaskResonanceParameters();
+    }
+
+    private void UpdateMaskResonance(BreathingState state, float intensity)
+    {
+        float clampedIntensity = Mathf.Clamp01(intensity) * outputEnvelope;
+        float volumeIntensity = GetVolumeIntensity(clampedIntensity);
+        float inhaleAmount = state == BreathingState.inhaling ? 1f : 0f;
+        float exhaleAmount = state == BreathingState.exhaling ? 1f : 0f;
+        float motion = Mathf.Clamp01(maskResonanceMotionAmount);
+
+        float lowPosition = Mathf.Clamp01(0.25f + clampedIntensity * 0.45f + inhaleAmount * 0.15f - exhaleAmount * 0.1f);
+        float midPosition = Mathf.Clamp01(0.35f + clampedIntensity * 0.35f + inhaleAmount * 0.1f);
+        float highPosition = Mathf.Clamp01(0.2f + clampedIntensity * 0.65f + inhaleAmount * 0.15f - exhaleAmount * 0.1f);
+
+        lowPosition = AddResonanceDrift(lowPosition, 0.71f, 0.0f, motion);
+        midPosition = AddResonanceDrift(midPosition, 0.93f, 1.7f, motion);
+        highPosition = AddResonanceDrift(highPosition, 1.23f, 3.1f, motion);
+
+        float lowMultiplier = state == BreathingState.exhaling ? exhaleLowGainMultiplier : inhaleLowGainMultiplier;
+        float midMultiplier = state == BreathingState.exhaling ? exhaleMidGainMultiplier : inhaleMidGainMultiplier;
+        float highMultiplier = state == BreathingState.exhaling ? exhaleHighGainMultiplier : inhaleHighGainMultiplier;
+
+        float targetLowFreq = Mathf.Lerp(lowResonanceHz.x, lowResonanceHz.y, lowPosition);
+        float targetMidFreq = Mathf.Lerp(midResonanceHz.x, midResonanceHz.y, midPosition);
+        float targetHighFreq = Mathf.Lerp(highResonanceHz.x, highResonanceHz.y, highPosition);
+        float targetLowGain = lowResonanceGainDb * volumeIntensity * lowMultiplier;
+        float targetMidGain = midResonanceGainDb * volumeIntensity * midMultiplier;
+        float targetHighGain = highResonanceGainDb * volumeIntensity * highMultiplier;
+        float targetQ = Mathf.Lerp(maskResonanceQRange.x, maskResonanceQRange.y, clampedIntensity);
+
+        float smooth = Time.deltaTime * maskResonanceSmoothSpeed;
+        currentMaskLowFreq = Mathf.Lerp(currentMaskLowFreq, targetLowFreq, smooth);
+        currentMaskMidFreq = Mathf.Lerp(currentMaskMidFreq, targetMidFreq, smooth);
+        currentMaskHighFreq = Mathf.Lerp(currentMaskHighFreq, targetHighFreq, smooth);
+        currentMaskLowGain = Mathf.Lerp(currentMaskLowGain, targetLowGain, smooth);
+        currentMaskMidGain = Mathf.Lerp(currentMaskMidGain, targetMidGain, smooth);
+        currentMaskHighGain = Mathf.Lerp(currentMaskHighGain, targetHighGain, smooth);
+        currentMaskLowQ = Mathf.Lerp(currentMaskLowQ, targetQ, smooth);
+        currentMaskMidQ = Mathf.Lerp(currentMaskMidQ, targetQ, smooth);
+        currentMaskHighQ = Mathf.Lerp(currentMaskHighQ, targetQ, smooth);
+    }
+
+    private float AddResonanceDrift(float position, float speed, float phase, float amount)
+    {
+        float drift = Mathf.Sin((Time.time * speed + phase) * Mathf.PI * 2f) * amount;
+        return Mathf.Clamp01(position + drift);
+    }
+
+    private void ApplyMaskResonanceParameters()
+    {
+        if (!sendMaskResonanceParams)
+            return;
+
+        SetParameterIfNamed(maskLowFreqParam, currentMaskLowFreq);
+        SetParameterIfNamed(maskLowGainParam, currentMaskLowGain);
+        SetParameterIfNamed(maskLowQParam, currentMaskLowQ);
+        SetParameterIfNamed(maskMidFreqParam, currentMaskMidFreq);
+        SetParameterIfNamed(maskMidGainParam, currentMaskMidGain);
+        SetParameterIfNamed(maskMidQParam, currentMaskMidQ);
+        SetParameterIfNamed(maskHighFreqParam, currentMaskHighFreq);
+        SetParameterIfNamed(maskHighGainParam, currentMaskHighGain);
+        SetParameterIfNamed(maskHighQParam, currentMaskHighQ);
+    }
+
+    private void SetParameterIfNamed(string parameterName, float value)
+    {
+        if (string.IsNullOrEmpty(parameterName))
+            return;
+
+        breathInstance.setParameterByName(parameterName, value);
     }
 
     private void PrepareFrequencyForBreathStart(BreathingState state)
@@ -335,6 +555,7 @@ public class BreathFMODDriver : MonoBehaviour
             breathInstance.setParameterByName(breathQVolumeParam, currentBreathQVolume);
             breathInstance.setParameterByName(breathFrequencyParam, currentBreathFrequency);
             SetBreathStateParameter(currentBreathState);
+            ApplyBreathReverbControl();
         }
     }
 
@@ -357,7 +578,7 @@ public class BreathFMODDriver : MonoBehaviour
         if (!controlEventReverbLevel)
             return;
 
-        breathInstance.setReverbLevel(0, Mathf.Clamp01(eventReverbLevel));
+        breathInstance.setReverbLevel(0, GetCurrentReverbAmount());
     }
 
     private void SetBreathReverbParameter()
@@ -365,7 +586,30 @@ public class BreathFMODDriver : MonoBehaviour
         if (!sendBreathReverbParam || string.IsNullOrEmpty(breathReverbParam))
             return;
 
-        breathInstance.setParameterByName(breathReverbParam, Mathf.Clamp01(breathReverbAmount));
+        breathInstance.setParameterByName(breathReverbParam, GetCurrentReverbAmount());
+    }
+
+    private float GetCurrentReverbAmount()
+    {
+        float targetReverbAmount = scaleReverbWithBreathRate
+            ? Mathf.Lerp(slowBreathReverbAmount, fastBreathReverbAmount, currentBreathRate)
+            : breathReverbAmount;
+
+        targetReverbAmount -= smoothedInputIntensity * intenseBreathReverbReduction;
+        float reverbActivity = Mathf.Clamp01(Mathf.Max(outputEnvelope, smoothedInputIntensity));
+        targetReverbAmount = Mathf.Lerp(idleReverbAmount, targetReverbAmount, reverbActivity);
+        targetReverbAmount = Mathf.Clamp01(targetReverbAmount);
+
+        float smoothSpeed = targetReverbAmount < currentDynamicReverbAmount
+            ? reverbReleaseSmoothSpeed
+            : breathRateSmoothSpeed;
+
+        currentDynamicReverbAmount = Mathf.Lerp(
+            currentDynamicReverbAmount,
+            targetReverbAmount,
+            Time.deltaTime * smoothSpeed);
+
+        return currentDynamicReverbAmount;
     }
 
     /// <summary>

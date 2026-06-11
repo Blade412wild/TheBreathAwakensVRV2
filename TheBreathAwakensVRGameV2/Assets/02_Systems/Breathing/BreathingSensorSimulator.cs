@@ -50,12 +50,6 @@ public class BreathingSensorSimulator : MonoBehaviour
     private DateTime currentTime;
     private TimeSpan timeSpan;
 
-    private SampleToInputConverter sampleToInputConverter = new SampleToInputConverter();
-
-
-
-
-
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
