@@ -18,10 +18,15 @@ public class SCBA : MonoBehaviour
     [SerializeField] private MessageFinishedReceived messageFinishedReceived;
     [SerializeField] private BreathingSystem breathingSystem;
     [SerializeField] private ExtractionManager extractionManager;
+    //[SerializeField] private SampleToInputConverter SampleToInputConverter;
     //[SerializeField] private In_ExhaleSpeedDataReceived received;
 
     [Header("FMOD")]
     [SerializeField] private EventReference BreathingStateChangeFMOD;
+
+
+    public float InExhaleSpeed => mask.CurrentInExhaleSpeed;
+    public BreathingState BreathingState => mask.CurrentBreathingState;
 
     private BreathingSystemManager breathingSystemManager;
     private OxygonPrediction oxygonPrediction;
@@ -36,6 +41,9 @@ public class SCBA : MonoBehaviour
         watch.UpdateOxygonPercentageUI(tank.AvailableOxygon, tank.AvailableOxygonPercentage);
         breathingSystem.OxygonPredictionDoneEvent += (x) => watch.UpdateOxygonEstimation(x);
         extractionManager.UpdateVisualTimerEvent += (x) => watch.UpdateExtraction(x);
+
+        mask.EquipEvent += HandleGaskMaskEquipEvent;
+        mask.UnequipEvent += HandleGaskMaskUnequipEvent;
 
         //received.OnDataReceivedEvent += Test;
     }
@@ -52,7 +60,8 @@ public class SCBA : MonoBehaviour
         //breathingSystemManager.OnDisable();
         breathingSystem.OxygonPredictionDoneEvent -= (x) => watch.UpdateOxygonEstimation(x);
         extractionManager.UpdateVisualTimerEvent -= (x) => watch.UpdateExtraction(x);
-
+        mask.EquipEvent -= HandleGaskMaskEquipEvent;
+        mask.UnequipEvent -= HandleGaskMaskUnequipEvent;
     }
 
     private void RunSCBASystem()
@@ -65,6 +74,7 @@ public class SCBA : MonoBehaviour
             HandleInhaling();
             watch.UpdateOxygonPercentageUI((int)tank.AvailableOxygon, (int)tank.AvailableOxygonPercentage);
         }
+
     }
 
     private void HandleInhaling()
@@ -86,6 +96,24 @@ public class SCBA : MonoBehaviour
             //Debug.LogWarning("didn;t reference for breathingStateChanged");
         }
 
+    }
+
+    private void HandleGaskMaskEquipEvent()
+    {
+        Debug.Log("handle equip");
+        messageFinishedReceived.OnDataReceivedEvent += UpdateMask;
+    }
+
+    private void HandleGaskMaskUnequipEvent()
+    {
+        Debug.Log("handle unequip");
+        messageFinishedReceived.OnDataReceivedEvent -= UpdateMask;
+    }
+
+    private void UpdateMask()
+    {
+        Debug.Log("updating mask");
+        mask.OnUpdate();
     }
 
     private void CheckReferences()

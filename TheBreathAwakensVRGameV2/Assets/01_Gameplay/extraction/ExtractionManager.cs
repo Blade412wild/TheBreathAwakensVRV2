@@ -62,7 +62,7 @@ public class ExtractionManager : MonoBehaviour
 
     private void handleTimerSecondPast()
     {
-        Debug.Log("second passed");
+        //Debug.Log("second passed");
         UpdateVisualTimerEvent?.Invoke(timer.timeleft);
         //string digitalTime = TimeLeftConversions.ConvertTimeToDigitalClock(timeLeft);
         //VisualTimer.text = digitalTime;

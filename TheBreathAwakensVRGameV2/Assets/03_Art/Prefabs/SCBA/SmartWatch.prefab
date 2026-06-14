@@ -707,12 +707,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9ebe069507ab94e4eb90b7291b7375cc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SCBASmartWatch
+  equip: 0
+  unequip: 0
   oxygonAmountPercecntageText: {fileID: 0}
   oxygonEstimation: {fileID: 8531308195893482724}
   oxygonEstimationClip: {fileID: 0}
   Extraction: {fileID: 338744249117830858}
   extractionClip: {fileID: 0}
   audioSource: {fileID: 0}
+  dotTrailBehaviour: {fileID: 0}
 --- !u!114 &537221600181641716
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5180,7 +5183,7 @@ GameObject:
   - component: {fileID: 1447833127711036832}
   - component: {fileID: 7276412326427590106}
   m_Layer: 5
-  m_Name: Canvas
+  m_Name: Screen
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

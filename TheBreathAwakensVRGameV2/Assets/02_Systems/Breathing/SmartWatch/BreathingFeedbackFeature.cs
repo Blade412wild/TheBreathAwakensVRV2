@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Drawing.Text;
 using TMPro;
 using UnityEngine;
@@ -23,8 +24,9 @@ public class BreathingFeedbackFeature : MonoBehaviour
     [Header("References")]
     [SerializeField] private RectTransform dot;
     [SerializeField] private DotTrailBehaviour dotTrailBehaviour;
-    [SerializeField] private BreathingDeviceData dataContainer;
     [SerializeField] private MessageFinishedReceived messageFinishedReceived;
+    [SerializeField] private SCBA scba;
+
 
     private Vector2 dotpos;
     private Vector2 dotPosTarget;
@@ -81,7 +83,7 @@ public class BreathingFeedbackFeature : MonoBehaviour
 
     private void HandleDataReceivedEvent()
     {
-        GetTargetPos(dataContainer.BreathingState, dataContainer.inExhaleSpeed);
+        GetTargetPos(scba.BreathingState, scba.InExhaleSpeed);
         dot.localPosition = dotPosTarget;
     }
 
