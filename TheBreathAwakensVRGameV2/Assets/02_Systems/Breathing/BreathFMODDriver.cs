@@ -4,12 +4,20 @@ using UnityEngine;
 
 public class BreathFMODDriver : MonoBehaviour
 {
+    [Header("References")]
+    [SerializeField] private bool activate;
+    [SerializeField] private bool deActivate;
+
+
     public enum DataOrigin { BreathCycle, ManualSlider, SensorData }
 
     [Header("References")]
     [SerializeField] private BreathingSensorSimulator simulator;
     [SerializeField] private EventReference breathEvent;
     [SerializeField] private BreathingDeviceData dataContainer;
+    [SerializeField] private SCBA scba;
+    [SerializeField] private OxygonMask mask;
+
 
 
     [Header("FMOD Parameter Names")]
@@ -94,6 +102,8 @@ public class BreathFMODDriver : MonoBehaviour
     private bool hadBreathInputLastFrame;
     private BreathingState lastActiveBreathingState = BreathingState.holdingBreath;
 
+    private bool isActive;
+
     private void Start()
     {
         if (dataContainer == null)
@@ -126,11 +136,51 @@ public class BreathFMODDriver : MonoBehaviour
         breathInstance.start();
         breathInstance.setPaused(true);
         eventIsPlaying = false;
+
+        mask.EquipEvent += Activate;
+        mask.UnequipEvent += Deactivate;
     }
 
     private void Update()
     {
-        BreathingState sensorState = dataContainer.BreathingState;
+        if (activate)
+        {
+            activate = false;
+            Activate();
+        }
+
+        if (deActivate)
+        {
+            deActivate = false;
+            Deactivate();
+        }
+
+        if (isActive)
+        {
+            OnUpdate();
+        }
+    }
+
+    public void Activate()
+    {
+        isActive = true;
+    }
+
+    public void Deactivate()
+    {
+        isActive = false;
+
+        // Send to FMOD
+        breathInstance.setParameterByName(breathGainParam, -80.0f);
+        breathInstance.setParameterByName(breathQVolumeParam, currentBreathQVolume);
+        breathInstance.setParameterByName(breathFrequencyParam, currentBreathFrequency);
+        SetBreathStateParameter(1.0f);
+        ApplyBreathReverbControl();
+        hadBreathInputLastFrame = false;
+    }
+    public void OnUpdate()
+    {
+        BreathingState sensorState = scba.BreathingState;
         float intensity = GetBreathIntensity();
         bool hasBreathInput = intensity >= breathStartThreshold
             || (eventIsPlaying && intensity > breathStopThreshold);
@@ -244,6 +294,7 @@ public class BreathFMODDriver : MonoBehaviour
         SetBreathStateParameter(currentBreathState);
         ApplyBreathReverbControl();
         hadBreathInputLastFrame = hasActiveBreathInput;
+
     }
 
     private float GetBreathIntensity()
@@ -251,7 +302,7 @@ public class BreathFMODDriver : MonoBehaviour
         if (dataOrigin == DataOrigin.SensorData)
         {
             return BreathingSensorSimulatorVisualFeedback.MapValueClamped(
-                Mathf.Abs(dataContainer.inExhaleSpeed),
+                Mathf.Abs(scba.InExhaleSpeed),
                 0f,
                 sensorSpeedForFullIntensity,
                 0f,

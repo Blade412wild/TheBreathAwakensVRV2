@@ -81,4 +81,9 @@ public class SCBASmartWatch : MonoBehaviour
 
 }
 
+public class GasMaskSoundFeature : MonoBehaviour
+{
+
+}
+
 

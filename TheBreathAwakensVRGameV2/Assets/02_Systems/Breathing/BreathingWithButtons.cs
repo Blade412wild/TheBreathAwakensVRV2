@@ -12,12 +12,18 @@ public class BreathingWithButtons : MonoBehaviour
     [Header("Ref")]
     [SerializeField] private InputActionReference actionReference;
     [SerializeField] private BreathingDeviceData data;
+    [SerializeField] private MessageFinishedReceived MessageFinishedReceived;
+
+    [SerializeField] private Timer timer;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         actionReference.action.Enable();
 
+        timer.OnTimerIsDone += HandleTimerDoneEvent;
+        timer.SetTimer(0.125f, true);
+        timer.StartTimer();
 
     }
 
@@ -30,9 +36,21 @@ public class BreathingWithButtons : MonoBehaviour
 
         SetbreathingState(rawInput);
         SetInhaleExhaleSpeed(rawInput);
+
+        timer.OnUpdate();
         //SetAudioVariable();
     }
 
+
+    public void Activate()
+    {
+
+    }
+
+    public void Deactivate()
+    {
+
+    }
     private void SetAudioVariable()
     {
         //Debug.Log(data.inExhaleSpeedAudioScale);
@@ -69,5 +87,10 @@ public class BreathingWithButtons : MonoBehaviour
         //Debug.Log("value : " + rawValue);
         return newSpeed;
 
+    }
+
+    private void HandleTimerDoneEvent()
+    {
+        MessageFinishedReceived.OnDataReceived("");
     }
 }

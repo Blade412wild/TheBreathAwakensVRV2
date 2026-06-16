@@ -146,7 +146,6 @@ public class BreathingSampleCreator
         {
             CreateSensorDataPoint();
             AddSensorDataPointToCurrentBreathCycle();
-
         }
 
     }

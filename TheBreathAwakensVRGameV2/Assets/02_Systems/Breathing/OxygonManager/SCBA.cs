@@ -8,6 +8,7 @@ public class SCBA : MonoBehaviour
     [Header("Controls")]
     [SerializeField] private bool mayUpdate;
     [SerializeField] private int maxCyclesPerSample;
+    [SerializeField] private bool useSampleCreator;
 
     [Header("References")]
     // SCBA = Self-Contained breathing Apparatus 
@@ -18,8 +19,6 @@ public class SCBA : MonoBehaviour
     [SerializeField] private MessageFinishedReceived messageFinishedReceived;
     [SerializeField] private BreathingSystem breathingSystem;
     [SerializeField] private ExtractionManager extractionManager;
-    //[SerializeField] private SampleToInputConverter SampleToInputConverter;
-    //[SerializeField] private In_ExhaleSpeedDataReceived received;
 
     [Header("FMOD")]
     [SerializeField] private EventReference BreathingStateChangeFMOD;
@@ -28,14 +27,17 @@ public class SCBA : MonoBehaviour
     public float InExhaleSpeed => mask.CurrentInExhaleSpeed;
     public BreathingState BreathingState => mask.CurrentBreathingState;
 
-    private BreathingSystemManager breathingSystemManager;
-    private OxygonPrediction oxygonPrediction;
+    private BreathingSampleManager breathingSystemManager;
 
     private void Start()
     {
         CheckReferences();
-        //breathingSystemManager = new BreathingSystemManager(messageFinishedReceived, breathingData, maxCyclesPerSample);
-        //breathingSystemManager.Activate();
+
+        if (useSampleCreator)
+        {
+            breathingSystemManager = new BreathingSampleManager(messageFinishedReceived, breathingData, maxCyclesPerSample);
+            //breathingSystemManager.Activate();
+        }
 
         breathingSystem.OnStart();
         watch.UpdateOxygonPercentageUI(tank.AvailableOxygon, tank.AvailableOxygonPercentage);
@@ -57,7 +59,12 @@ public class SCBA : MonoBehaviour
     private void OnDisable()
     {
         breathingSystem.OnDeactivate();
-        //breathingSystemManager.OnDisable();
+
+        if (useSampleCreator)
+        {
+            breathingSystemManager.OnDisable();
+        }
+
         breathingSystem.OxygonPredictionDoneEvent -= (x) => watch.UpdateOxygonEstimation(x);
         extractionManager.UpdateVisualTimerEvent -= (x) => watch.UpdateExtraction(x);
         mask.EquipEvent -= HandleGaskMaskEquipEvent;
@@ -66,7 +73,10 @@ public class SCBA : MonoBehaviour
 
     private void RunSCBASystem()
     {
-        //breathingSystemManager.OnUpdate();
+        if (useSampleCreator)
+        {
+            breathingSystemManager.OnUpdate();
+        }
         breathingSystem.OnUpdate();
 
         if (breathingData.BreathingState == BreathingState.inhaling)
@@ -101,18 +111,30 @@ public class SCBA : MonoBehaviour
     private void HandleGaskMaskEquipEvent()
     {
         Debug.Log("handle equip");
+
+        if (useSampleCreator)
+        {
+            breathingSystemManager.Activate();
+        }
+
         messageFinishedReceived.OnDataReceivedEvent += UpdateMask;
     }
 
     private void HandleGaskMaskUnequipEvent()
     {
         Debug.Log("handle unequip");
+
+        if (useSampleCreator)
+        {
+            breathingSystemManager.DeActivate();
+        }
+
         messageFinishedReceived.OnDataReceivedEvent -= UpdateMask;
     }
 
     private void UpdateMask()
     {
-        Debug.Log("updating mask");
+        //Debug.Log("updating mask");
         mask.OnUpdate();
     }
 

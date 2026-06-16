@@ -2,7 +2,7 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 
-public class BreathingSystemManager
+public class BreathingSampleManager
 {
     public event Action<BreathingSampleClass> SampleAnalyzedEvent;
     public event Action BreathingStateChanged;
@@ -21,7 +21,7 @@ public class BreathingSystemManager
 
     private bool isActive = false;
 
-    public BreathingSystemManager(MessageFinishedReceived messageFinishedReceived, BreathingDeviceData data, int cyclesPerBreathingSample)
+    public BreathingSampleManager(MessageFinishedReceived messageFinishedReceived, BreathingDeviceData data, int cyclesPerBreathingSample)
     {
         deviceData = data;
 
