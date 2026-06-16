@@ -42,6 +42,8 @@ public class SCBASmartWatch : MonoBehaviour
             unequip = false;
             UnequipSmartWatch();
         }
+
+
     }
 
     public void Init()

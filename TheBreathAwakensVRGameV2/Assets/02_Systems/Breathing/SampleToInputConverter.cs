@@ -45,7 +45,7 @@ public class SampleToInputConverter : MonoBehaviour
         if (messageReceived)
         {
             messageReceived = false;
-            messageFinishedReceived.OnDataReceived("");
+            messageFinishedReceived.OnDataReceived("sample");
         }
     }
 
