@@ -43,6 +43,7 @@ public class BreathingFeedbackFeature : MonoBehaviour
     void Update()
     {
         if (!useOwnUpdate) return;
+        OnUpdate();
     }
 
     private void OnDisable()

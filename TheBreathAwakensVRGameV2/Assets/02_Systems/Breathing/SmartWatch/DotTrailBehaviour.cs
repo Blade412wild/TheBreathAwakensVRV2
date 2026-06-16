@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Text;
@@ -48,12 +49,14 @@ public class DotTrailBehaviour : MonoBehaviour
     private void Update()
     {
         if (!useOwnUpdate) return;
+
         if (messageReceived)
         {
             messageReceived = false;
             HandleMessageFinishedEvent();
         }
-        UpdateActiveTrailpoints();
+
+        OnUpdate();
     }
     private void OnDisable()
     {
@@ -62,12 +65,14 @@ public class DotTrailBehaviour : MonoBehaviour
     }
     public void Init()
     {
+        //Debug.Log("Init");
         SetupTrail();
         threshold = ThresholdTrans.localPosition.x;
     }
 
     public void OnUpdate()
     {
+        //Debug.Log("Onupdate");
         UpdateActiveTrailpoints();
     }
 
@@ -123,6 +128,8 @@ public class DotTrailBehaviour : MonoBehaviour
         trailPoint.Position = dot.localPosition;
 
         trailPointsActiveBuffer.Push(trailPoint);
+        //Debug.Log(DateTime.Now);
+        
 
         //Debug.Log("trailPoint = " + trailPoint + " x | count : " + trailPointsActiveBuffer.Count + " x "/* + " | OxygonUsed : " + oxygonUsed*/);
     }
