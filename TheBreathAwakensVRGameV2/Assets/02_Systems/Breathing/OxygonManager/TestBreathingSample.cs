@@ -38,6 +38,7 @@ public class TestBreathingSample : MonoBehaviour
     private BreathingSampleCreator creator;
     private BreathingSampleSaver saver;
     private BreathingSampleManager breathingSystemManager;
+    private SCBA SCBA;
 
     private Timer timer = new Timer();
 
@@ -46,7 +47,7 @@ public class TestBreathingSample : MonoBehaviour
     {
         if (!useThis) return;
 
-        breathingSystemManager = new BreathingSampleManager(messageFinishedReceived, deviceData, cyclesPerSample);
+        //breathingSystemManager = new BreathingSampleManager(messageFinishedReceived, deviceData, cyclesPerSample);
         breathingSystemManager.Activate();
 
         timer.SetTimer(0.125f, true);

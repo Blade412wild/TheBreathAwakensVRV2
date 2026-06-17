@@ -1,28 +1,34 @@
-using NUnit.Framework;
 using System;
-using System.Collections.Generic;
+using UnityEngine;
 
 public class BreathingSampleManager
 {
+    public event Action<BreathingSampleClass> FirstSampleAnalysed;
+    public event Action<BreathingSampleClass> SampleAnalysed;
+
+
     public event Action<BreathingSampleClass> SampleAnalyzedEvent;
     public event Action BreathingStateChanged;
+    public BreathingSampleClass FirstSample { get; private set; }
 
     private BreathingSampleCreator creator;
     private BreathingSampleAnalyzer analyzer;
     private BreathingSampleSaver saver;
 
-    private BreathingSample2 TestSample;
 
     private BreathingState previousBreathingState;
     private BreathingState currentBreathingState;
 
     private BreathingDeviceData deviceData;
     private bool saveFlag;
+    private BreathingSystem breathingSystem;
 
     private bool isActive = false;
 
-    public BreathingSampleManager(MessageFinishedReceived messageFinishedReceived, BreathingDeviceData data, int cyclesPerBreathingSample)
+    public BreathingSampleManager(MessageFinishedReceived messageFinishedReceived, BreathingDeviceData data, int cyclesPerBreathingSample, BreathingSystem breathingSystem)
     {
+
+        this.breathingSystem = breathingSystem;
         deviceData = data;
 
         creator = new BreathingSampleCreator(messageFinishedReceived, data, cyclesPerBreathingSample);
@@ -31,6 +37,7 @@ public class BreathingSampleManager
 
         previousBreathingState = BreathingState.holdingBreath;
         currentBreathingState = BreathingState.holdingBreath;
+
 
     }
 
@@ -52,17 +59,41 @@ public class BreathingSampleManager
     public void Activate()
     {
         isActive = true;
-        creator.Activate();
         creator.FinishedCreatingSampleEvent += HandleFinishedCreatingSampleEvent;
+
         analyzer.SampleAnalyzedEvent += HandleSampleAnalyzed;
+
+        breathingSystem.CreateFirstSampleEvent += HandleCreatingFirstSampleEvent;
+        breathingSystem.StopCreateFirstSampleEvent += HandleStopCreatingSampleEvent;
+
+        breathingSystem.StartSampling += creator.StartCreatingSamples;
+        breathingSystem.StopSampling += creator.StopSampling;
+
     }
 
     public void DeActivate()
     {
         isActive = false;
-        creator.Deactivate();
         creator.FinishedCreatingSampleEvent -= HandleFinishedCreatingSampleEvent;
+
         analyzer.SampleAnalyzedEvent -= HandleSampleAnalyzed;
+
+        breathingSystem.CreateFirstSampleEvent -= HandleCreatingFirstSampleEvent;
+        breathingSystem.StopCreateFirstSampleEvent -= HandleStopCreatingSampleEvent;
+
+        breathingSystem.StartSampling -= creator.StartCreatingSamples;
+        breathingSystem.StartSampling -= creator.StopSampling;
+    }
+
+    private void HandleCreatingFirstSampleEvent()
+    {
+        creator.StartCreatingExampleSample();
+    }
+
+    private void HandleStopCreatingSampleEvent()
+    {
+        creator.StopCreatingExampleSample();
+        //creator.StartCreatingSamples();
     }
 
     private void HandleFinishedCreatingSampleEvent(BreathingSampleClass sample)
@@ -72,8 +103,17 @@ public class BreathingSampleManager
 
     private void HandleSampleAnalyzed(BreathingSampleClass sample)
     {
+        if (FirstSample == null)
+        {
+            FirstSample = sample;
+            FirstSampleAnalysed?.Invoke(sample);
+
+            Debug.Log("fnished First Sample");
+            return;
+        }
+
+
         SampleAnalyzedEvent?.Invoke(sample);
-        //oxygonPredictionSystem.
         saver.SaveNewBreathSample(sample);
     }
 

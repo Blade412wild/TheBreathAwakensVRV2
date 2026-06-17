@@ -21,6 +21,8 @@ public class OxygonTank : MonoBehaviour
     public float AvailableOxygonPercentage { get; private set; }
     public float SurfaceArea { get; private set; }
 
+    public float TargetTime { get; private set; }
+
 
     private const int TankPressure = 200; // in bar
     private const float Pi = Mathf.PI;
@@ -61,17 +63,16 @@ public class OxygonTank : MonoBehaviour
 
     public void Setup()
     {
-        //CalculateMaxAvailableOxygon();
-
-        
         SurfaceArea = Pi * Mathf.Pow(noseRadius, 2) * 2; // *2 is because of the 2 noseholes 
-        CalculateVolumeBasedOnTimeAndSample(averageSpeedperCycle);
+        //CalculateVolumeBasedOnTimeAndSample(averageSpeedperCycle);
+        MaxVolume = 1000.0f;
         AvailableOxygon = MaxVolume;
+        TargetTime = GetTargetTime();
     }
 
     public void UpdateOxygonTankVolume(float recordedflowRate)
     {
-        MaxVolume = recordedflowRate * GetTargetTime();
+        MaxVolume = recordedflowRate * TargetTime;
         AvailableOxygon = MaxVolume;
 
     }

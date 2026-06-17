@@ -1,46 +1,130 @@
 using System;
 using System.Drawing.Text;
 using UnityEngine;
+using static UnityEngine.PlayerLoop.PreUpdate;
 
 public class BreathingSystem : MonoBehaviour
 {
+    public event Action CreateFirstSampleEvent;
+    public event Action StopCreateFirstSampleEvent;
+
+    public event Action StartSampling;
+    public event Action StopSampling;
+
+    public event Action<BreathingSampleClass> FirstSampleAnalysed;
+    public event Action<BreathingSampleClass> SampleAnalysed;
+
     public event Action PredictBreathingTime;
     public event Action<TimeLeftStruct> OxygonPredictionDoneEvent;
 
+    [Header("Controls")]
+    [SerializeField] private bool mayUpdate;
+    [SerializeField] private int maxCyclesPerSample;
+    [SerializeField] private bool useSampleCreator;
+    [SerializeField] private bool createFirstSample;
+    [SerializeField] private bool stopCreatinngFirstSample;
+
+    [Header("References")]
     [SerializeField] private OxygonTank oxygonTank;
     [SerializeField] private BreathingDeviceData dataContainer;
     [SerializeField] private MessageFinishedReceived messageFinishedReceived;
-    [SerializeField]  private BreathingSample2 sample;
+    [SerializeField] private BreathingSample2 sample;
     [SerializeField] private SampleToInputConverter sampleToInputConverter;
+    [SerializeField] private BreathingDeviceData deviceData;
+
 
     private OxygonPrediction oxygonPrediction;
     private DateTime previousOxgyonUsedDateTime;
     private float previousSpeed = 0;
+    private BreathingSampleManager breathingSystemManager;
 
     public void OnStart()
     {
         oxygonTank.Setup();
-        oxygonPrediction = new OxygonPrediction(oxygonTank, this, sample);
 
-        messageFinishedReceived.OnDataReceivedEvent += HandleSensorDataReceived;
-        sampleToInputConverter.SampleFinishedEvent += () => PredictBreathingTime?.Invoke();
+        if (useSampleCreator)
+        {
+            breathingSystemManager = new BreathingSampleManager(messageFinishedReceived, deviceData, maxCyclesPerSample, this);
+            breathingSystemManager.Activate();
+
+            breathingSystemManager.SampleAnalysed += (x) => SampleAnalysed?.Invoke(x);
+            breathingSystemManager.FirstSampleAnalysed += (x) => FirstSampleAnalysed.Invoke(x);
+
+            OxygonPredictionDoneEvent += (x) => StartSampling?.Invoke();
+            StartSampling += HandleStartSamplingEvent;
+        }
+
+        oxygonPrediction = new OxygonPrediction(this, oxygonTank);
+
+        CreateFirstSampleEvent += HandleCreateFirstSampleEvent;
+        StopCreateFirstSampleEvent += HandleStopCreateFirstSampleEvent;
         oxygonPrediction.OxygonPredictionMadeEvent += (x) => OxygonPredictionDoneEvent?.Invoke(x);
     }
 
     public void OnUpdate()
     {
-        //oxygonTank.UseOxygonTank(5, Time.deltaTime);
-        //oxygonTank.UpdatePercentage();
+        if (!mayUpdate) return;
+
+        if (createFirstSample)
+        {
+            createFirstSample = false;
+            CreateFirstSampleEvent?.Invoke();
+        }
+
+        if (stopCreatinngFirstSample)
+        {
+            stopCreatinngFirstSample = false;
+            StopCreateFirstSampleEvent?.Invoke();
+        }
+
+        if (breathingSystemManager != null)
+        {
+            breathingSystemManager.OnUpdate();
+        }
     }
 
     public void OnDeactivate()
     {
+        if (useSampleCreator)
+        {
+            breathingSystemManager.SampleAnalysed -= (x) => SampleAnalysed?.Invoke(x);
+            breathingSystemManager.FirstSampleAnalysed -= (x) => FirstSampleAnalysed.Invoke(x);
+            OxygonPredictionDoneEvent -= (x) => StartSampling?.Invoke();
+
+
+            breathingSystemManager.OnDisable();
+        }
+
         messageFinishedReceived.OnDataReceivedEvent -= HandleSensorDataReceived;
         sampleToInputConverter.SampleFinishedEvent -= () => PredictBreathingTime?.Invoke();
         oxygonPrediction.OxygonPredictionMadeEvent -= (x) => OxygonPredictionDoneEvent?.Invoke(x);
 
+
     }
 
+    private void HandleCreateFirstSampleEvent()
+    {
+        messageFinishedReceived.OnDataReceivedEvent += HandleSensorDataReceived;
+
+    }
+
+    private void HandleStopCreateFirstSampleEvent()
+    {
+        messageFinishedReceived.OnDataReceivedEvent -= HandleSensorDataReceived;
+
+    }
+
+    private void HandleStartSamplingEvent()
+    {
+        messageFinishedReceived.OnDataReceivedEvent += HandleSensorDataReceived;
+
+    }
+
+    private void HandleStopSamplingEvent()
+    {
+        messageFinishedReceived.OnDataReceivedEvent -= HandleSensorDataReceived;
+
+    }
     private void HandleSensorDataReceived()
     {
         if (dataContainer.BreathingState != BreathingState.inhaling) return;

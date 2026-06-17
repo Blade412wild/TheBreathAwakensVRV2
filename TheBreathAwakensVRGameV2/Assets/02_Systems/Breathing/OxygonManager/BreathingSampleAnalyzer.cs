@@ -24,6 +24,7 @@ public class BreathingSampleAnalyzer
 
     public void AnalyzeSample(BreathingSampleClass sample)
     {
+        
         List<SensorDataPoint> totalInhalePoints = new List<SensorDataPoint>();
         List<SensorDataPoint> totalexhalePoints = new List<SensorDataPoint>();
 
@@ -44,7 +45,19 @@ public class BreathingSampleAnalyzer
         sample.AvarageInhaleSpeed = avarageSpeedInhaling;
         sample.AvarageExhaleSpeed = avarageSpeedExhaling;
 
+        sample.TotalDuration = GetTotalDuration(sample);
+
         SampleAnalyzedEvent?.Invoke(sample);
+    }
+
+    private float GetTotalDuration(BreathingSampleClass sample)
+    {
+        float duration = 0;
+        foreach(BreathCycle cycle in sample.breathingCycles)
+        {
+            duration += cycle.duration;
+        }
+        return duration;
     }
 
     private void CreateNewDatapointList(List<BreathCycle> breathCycles, List<SensorDataPoint> totalInhalePoints, List<SensorDataPoint> totalexhalePoints)
