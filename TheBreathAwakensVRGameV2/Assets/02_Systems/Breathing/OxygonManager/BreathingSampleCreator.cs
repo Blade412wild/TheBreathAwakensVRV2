@@ -41,6 +41,9 @@ public class BreathingSampleCreator
     private bool StopCreatingSample;
     private int initialMaxCycles;
 
+    private DateTime startBreathingSampleDateTime = DateTime.MinValue;
+
+    private float previousDuration = 0;
 
 
     //private string BreathingSampleFolderPath = "Assets";
@@ -124,7 +127,11 @@ public class BreathingSampleCreator
         {
             if (data.BreathingState == BreathingState.inhaling)
             {
+                startBreathingSampleDateTime = DateTime.Now;
+                //Debug.Log("StopWatch CurrentTime : " + stopWatch.currentTime);
                 BeginCreatingNewSample();
+                //Debug.Log("StopWatch CurrentTime 2 : " + stopWatch.currentTime);
+
             }
             else
             {
@@ -199,13 +206,15 @@ public class BreathingSampleCreator
     {
         //Debug.Log("-Cycle finished");
 
-        currentBreathCycle.duration = stopWatch.currentTime;
+        currentBreathCycle.duration = stopWatch.currentTime - previousDuration;
+        previousDuration = stopWatch.currentTime;
+       // Debug.Log("Cycle duration" + currentBreathCycle.duration);
 
         //currentSample.breathingCycles.Add(currentBreathCycle);
         currentBreathingSampleClass.breathingCycles.Add(currentBreathCycle);
 
 
-        Debug.Log(" | currentBreathingSampleClass : " + currentBreathingSampleClass.breathingCycles.Count);
+        //Debug.Log(" | currentBreathingSampleClass : " + currentBreathingSampleClass.breathingCycles.Count);
 
         if (IsSampleFinished())
         {
@@ -217,6 +226,11 @@ public class BreathingSampleCreator
 
             breathingStateHistory.Clear();
             CreatingSample = false;
+            previousDuration = 0.0f;
+
+            TimeSpan timeSpan = DateTime.Now - startBreathingSampleDateTime;
+
+            //Debug.Log(" | breathSampleCreator Timespan : " + timeSpan.TotalSeconds + " | breathSampleCreator Stopwatch : " + stopWatch.currentTime);
 
             if (CurrentState == CreatorState.CreatingSamples)
                 FinishedCreatingSampleEvent?.Invoke(currentBreathingSampleClass);
@@ -233,7 +247,7 @@ public class BreathingSampleCreator
 
     private void StartNextCycle()
     {
-        Debug.Log("next Cycle");
+        //Debug.Log("next Cycle");
         breathingStateHistory.Clear();
         CreateNewBreathCycleInstance();
 
@@ -290,7 +304,9 @@ public class BreathingSampleCreator
         if (CurrentState == CreatorState.CreatingSamples)
         {
             if (currentBreathingSampleClass.breathingCycles.Count > maxCycles - 1) // targetCycles per sample reached
+            {
                 return true;
+            }
         }
 
         return false;

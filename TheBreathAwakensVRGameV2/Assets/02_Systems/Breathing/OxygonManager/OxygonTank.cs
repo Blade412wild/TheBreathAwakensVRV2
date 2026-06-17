@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -27,6 +28,8 @@ public class OxygonTank : MonoBehaviour
     private const int TankPressure = 200; // in bar
     private const float Pi = Mathf.PI;
     private float noseRadius = 0.004f; // m //TODO this needs to be calibrated
+
+    private DateTime TankSetTo5MinutesDat4eTime;
 
     //[Header("testing")]
     //public float TEST = 1000;
@@ -74,6 +77,7 @@ public class OxygonTank : MonoBehaviour
     {
         MaxVolume = recordedflowRate * TargetTime;
         AvailableOxygon = MaxVolume;
+        TankSetTo5MinutesDat4eTime = DateTime.Now;
 
     }
 
@@ -93,6 +97,8 @@ public class OxygonTank : MonoBehaviour
 
         if (AvailableOxygon <= 0)
         {
+            TimeSpan timeSpan = DateTime.Now - TankSetTo5MinutesDat4eTime;
+            //Debug.Log("total duration OxygenUSage: " + timeSpan.TotalSeconds);
             AvailableOxygon = 0;
             IsEmpty = true;
         }

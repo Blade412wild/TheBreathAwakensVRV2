@@ -58,7 +58,7 @@ public class SCBASmartWatch : MonoBehaviour
 
     public void UpdateOxygonEstimation(TimeLeftStruct value)
     {
-
+        Debug.Log("update estimation : " + value);
         oxygonEstimation.text = TimeLeftConversions.ConvertTimeToDigitalClock(value);
     }
 

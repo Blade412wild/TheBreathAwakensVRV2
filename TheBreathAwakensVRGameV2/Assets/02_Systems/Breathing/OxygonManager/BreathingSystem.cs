@@ -38,9 +38,12 @@ public class BreathingSystem : MonoBehaviour
     private float previousSpeed = 0;
     private BreathingSampleManager breathingSystemManager;
 
+    private DateTime startFirstSampleDateTime = DateTime.MinValue;
+
     public void OnStart()
     {
         oxygonTank.Setup();
+        oxygonPrediction = new OxygonPrediction(this, oxygonTank);
 
         if (useSampleCreator)
         {
@@ -50,15 +53,22 @@ public class BreathingSystem : MonoBehaviour
             breathingSystemManager.SampleAnalysed += (x) => SampleAnalysed?.Invoke(x);
             breathingSystemManager.FirstSampleAnalysed += (x) => FirstSampleAnalysed.Invoke(x);
 
-            OxygonPredictionDoneEvent += (x) => StartSampling?.Invoke();
+            oxygonPrediction.FirstOxygonPredictionMadeEvent += (x) => StartSampling?.Invoke();
             StartSampling += HandleStartSamplingEvent;
         }
 
-        oxygonPrediction = new OxygonPrediction(this, oxygonTank);
 
         CreateFirstSampleEvent += HandleCreateFirstSampleEvent;
         StopCreateFirstSampleEvent += HandleStopCreateFirstSampleEvent;
+
         oxygonPrediction.OxygonPredictionMadeEvent += (x) => OxygonPredictionDoneEvent?.Invoke(x);
+        oxygonPrediction.OxygonPredictionMadeEvent += Test;
+        OxygonPredictionDoneEvent += Test;
+    }
+
+    private void Test(TimeLeftStruct _struct)
+    {
+        Debug.Log("event struct : " + _struct);
     }
 
     public void OnUpdate()
@@ -106,16 +116,20 @@ public class BreathingSystem : MonoBehaviour
     {
         messageFinishedReceived.OnDataReceivedEvent += HandleSensorDataReceived;
 
+
     }
 
     private void HandleStopCreateFirstSampleEvent()
     {
+        //TimeSpan timeSpan = DateTime.Now - startFirstSampleDateTime;
+        //Debug.Log("total duration TimeSpan: " + timeSpan.TotalSeconds);
         messageFinishedReceived.OnDataReceivedEvent -= HandleSensorDataReceived;
 
     }
 
     private void HandleStartSamplingEvent()
     {
+        Debug.Log("start Sampling");
         messageFinishedReceived.OnDataReceivedEvent += HandleSensorDataReceived;
 
     }
