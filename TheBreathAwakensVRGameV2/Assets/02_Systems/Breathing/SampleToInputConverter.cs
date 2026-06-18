@@ -50,17 +50,22 @@ public class SampleToInputConverter : MonoBehaviour
         BreathingState state = GetBreathingState(rawValue);
         float convertedValue = GetTrueValue(state, rawValue);
 
+        if(convertedValue <= 0.5)
+        {
+            convertedValue = 0.0f ;
+        }
+
         dataContainer.inExhaleSpeed = convertedValue;
         dataContainer.BreathingState = state;
     }
 
     private BreathingState GetBreathingState(float value)
     {
-        if (value > 0)
+        if (value > 0.05)
         {
             return BreathingState.inhaling;
         }
-        else if (value < 0)
+        else if (value < -0.5)
         {
             return BreathingState.exhaling;
         }
