@@ -37,21 +37,21 @@
         [SerializeField] private float eventReverbLevel = 0.75f;
         [SerializeField] private bool scaleReverbWithBreathRate = true;
         [Range(0f, 1f)]
-        [SerializeField] private float slowBreathReverbAmount = 0.45f;
+        [SerializeField] private float slowBreathReverbAmount = 0.50f;
         [Range(0f, 1f)]
-        [SerializeField] private float fastBreathReverbAmount = 0.24f;
+        [SerializeField] private float fastBreathReverbAmount = 0.35f;
         [Range(0f, 1f)]
-        [SerializeField] private float intenseBreathReverbReduction = 0.24f;
+        [SerializeField] private float intenseBreathReverbReduction = 0.60f;
         [Range(0f, 1f)]
-        [SerializeField] private float idleReverbAmount = 0f;
-        [SerializeField] private float reverbActivityPower = 1.8f;
+        [SerializeField] private float idleReverbAmount = 0.08f;
+        [SerializeField] private float reverbActivityPower = 1.2f;
         [SerializeField] private Vector2 breathPhaseDurationRange = new Vector2(0.35f, 2.0f);
         [SerializeField] private float breathRateSmoothSpeed = 4f;
-        [SerializeField] private float reverbReleaseSmoothSpeed = 24f;
+        [SerializeField] private float reverbReleaseSmoothSpeed = 4f;
         [SerializeField] private string breathReverbParam = "audioBreathReverb";
         [SerializeField] private bool sendBreathReverbParam;
         [Range(0f, 1f)]
-        [SerializeField] private float breathReverbAmount = 0.75f;
+        [SerializeField] private float breathReverbAmount = 0.60f;
 
         [Header("Frequency Mapping (Hz)")]
         [SerializeField] private float frequencyMin = 660f;      // Exhale: lower frequency
@@ -82,10 +82,10 @@
         [SerializeField] private float highResonanceGainDb = 5.5f;
         [SerializeField] private float inhaleLowGainMultiplier = 0.65f;
         [SerializeField] private float inhaleMidGainMultiplier = 1.0f;
-        [SerializeField] private float inhaleHighGainMultiplier = 1.15f;
+        [SerializeField] private float inhaleHighGainMultiplier = 2.0f;
         [SerializeField] private float exhaleLowGainMultiplier = 1.15f;
         [SerializeField] private float exhaleMidGainMultiplier = 0.9f;
-        [SerializeField] private float exhaleHighGainMultiplier = 0.65f;
+        [SerializeField] private float exhaleHighGainMultiplier = 0.35f;
         [SerializeField] private Vector2 maskResonanceQRange = new Vector2(2.2f, 6.0f);
         [SerializeField] private float maskResonanceMotionAmount = 0.12f;
         [SerializeField] private float maskResonanceSmoothSpeed = 7f;
@@ -269,8 +269,8 @@
 
                 if (pauseEventWhenSilent && holdTimer >= holdPauseDelay)
                 {
-                    SendSilentParameters(effectiveState);
-                    StopBreathEventImmediately();
+                    // Let the release/fade run for a bit instead of forcing silent parameters immediately
+                    FadeOutBreathWithoutFrequencySweep(effectiveState);
                     holdTimer = 0f;
                     idleTimer = 0f;
                     lastInputIntensity = 0f;
@@ -289,11 +289,13 @@
                 && outputEnvelope <= releasePauseThreshold
                 && currentBreathGain <= fmodParamMin + releaseGainStopThreshold)
             {
-                SendSilentParameters(effectiveState);
+                // Gradually fade parameters instead of forcing silence immediately
+                FadeOutBreathWithoutFrequencySweep(effectiveState);
                 idleTimer += Time.deltaTime;
 
                 if (pauseEventWhenSilent && idleTimer >= idlePauseDelay)
                 {
+                    // Now stop the event (allowing the event to fade out)
                     StopBreathEventImmediately();
                     idleTimer = 0f;
                 }
@@ -473,9 +475,12 @@
             if (!breathInstance.isValid())
                 return;
 
-            breathInstance.stop(FMOD.Studio.STOP_MODE.IMMEDIATE);
+            // Use ALLOWFADEOUT to avoid abrupt cuts; FMOD event can fade according to its internal settings
+            breathInstance.stop(FMOD.Studio.STOP_MODE.ALLOWFADEOUT);
             eventIsPlaying = false;
         }
+
+            
 
         private float GetVolumeIntensity(float intensity)
         {
@@ -529,7 +534,7 @@
 
             float lowPosition = Mathf.Clamp01(0.25f + clampedIntensity * 0.45f + inhaleAmount * 0.15f - exhaleAmount * 0.1f);
             float midPosition = Mathf.Clamp01(0.35f + clampedIntensity * 0.35f + inhaleAmount * 0.1f);
-            float highPosition = Mathf.Clamp01(0.2f + clampedIntensity * 0.65f + inhaleAmount * 0.15f - exhaleAmount * 0.1f);
+            float highPosition = Mathf.Clamp01(0.2f + clampedIntensity * 0.65f + inhaleAmount * 0.30f - exhaleAmount * 0.25f);
 
             lowPosition = AddResonanceDrift(lowPosition, 0.71f, 0.0f, motion);
             midPosition = AddResonanceDrift(midPosition, 0.93f, 1.7f, motion);
